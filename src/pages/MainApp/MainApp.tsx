@@ -2,7 +2,7 @@ import { type FC } from "react";
 import { useInitData } from "@telegram-apps/sdk-react";
 
 import { Placeholder } from "@telegram-apps/telegram-ui";
-
+import { NavBar } from "./NavBar";
 export const MainApp: FC = () => {
   const initData = useInitData();
 
@@ -21,8 +21,9 @@ export const MainApp: FC = () => {
     );
   }
   return (
-    <div className="container flex items-center">
-      <h1 className="text-6xl">Welcome to board {initData?.user?.username}</h1>
+    <div className="md:container md:mx-auto text-center">
+      <NavBar />
+      <h1 className="text-6xl text-red-500 ">Soon...</h1>
     </div>
   );
 };

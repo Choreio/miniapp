@@ -15,7 +15,7 @@ interface Route {
 }
 
 export const routes: Route[] = [
-  { path: "/", Component: IndexPage },
+  { path: "/", Component: MainApp },
   { path: "/init-data", Component: InitDataPage, title: "Init Data" },
   { path: "/theme-params", Component: ThemeParamsPage, title: "Theme Params" },
   {
@@ -46,5 +46,5 @@ export const routes: Route[] = [
       </svg>
     ),
   },
-  { path: "/app", Component: MainApp, title: "App" },
+  { path: "/demo", Component: IndexPage, title: "Demo" },
 ];
