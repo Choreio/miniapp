@@ -26,7 +26,7 @@ if (import.meta.env.DEV) {
         id: 99281932,
         first_name: 'Andrew',
         last_name: 'Rogue',
-        username: 'rogue',
+        username: 'roguesuperstartoolongusername',
         language_code: 'en',
         is_premium: true,
         allows_write_to_pm: true,
