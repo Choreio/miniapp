@@ -14,8 +14,8 @@ import { type FC, useEffect, useMemo } from "react";
 import { Navigate, Route, Router, Routes } from "react-router-dom";
 
 import { routes } from "@/navigation/routes.tsx";
-import NavBar from "@/pages/MainApp/NavBar";
-import Footer from "@/pages/MainApp/Footer";
+import { Header } from "@/pages/Nav/Header";
+import Footer from "@/pages/Nav/Footer";
 
 export const App: FC = () => {
   const lp = useLaunchParams();
@@ -52,16 +52,16 @@ export const App: FC = () => {
       appearance={miniApp.isDark ? "dark" : "light"}
       platform={["macos", "ios"].includes(lp.platform) ? "ios" : "base"}
     >
-      <NavBar />
       <Router location={location} navigator={reactNavigator}>
+        <Header />
         <Routes>
           {routes.map((route) => (
             <Route key={route.path} {...route} />
           ))}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        <Footer />
       </Router>
-      <Footer />
     </AppRoot>
   );
 };

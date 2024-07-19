@@ -3,7 +3,7 @@ import { useInitData } from "@telegram-apps/sdk-react";
 
 import { Placeholder } from "@telegram-apps/telegram-ui";
 
-export const MainApp: FC = () => {
+export const Tasks: FC = () => {
   const initData = useInitData();
 
   if (!initData) {
@@ -24,7 +24,7 @@ export const MainApp: FC = () => {
   return (
     <div className="md:container md:mx-auto text-center">
       <div className="pt-4 h-full">
-        <h1 className="text-6xl">Soon...</h1>
+        <h1 className="text-6xl">Tasks will be added soon...</h1>
       </div>
     </div>
   );
