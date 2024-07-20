@@ -11,7 +11,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { useInitData } from "@telegram-apps/sdk-react";
 import { useNavigate } from "react-router-dom";
-import { Avatar } from "@telegram-apps/telegram-ui";
 
 export function Header() {
   //const initData = useInitData();
@@ -31,19 +30,24 @@ export function Header() {
   }
 
   return (
-    <header className="inset-x-0 top-0 z-49 border bg-slate-500 ">
-      <nav aria-label="Global" className="flex items-center justify-between">
-        <div className="flex p-6  ">
-          <a href="#" className="-m-1.5 p-1.5">
+    <header className="inset-x-0 top-0 z-49 pb-2">
+      <nav
+        aria-label="Global"
+        className="w-full flex items-center justify-between"
+      >
+        <div className="h-full inline-flex self-start items-start justify-end p-2">
+          <a href="#" className="-m-1.5 p-1">
             <span className="sr-only">Chores</span>
-            <img alt="" src={logo} className="h-12 w-auto" />
+            <img alt="" src={logo} className="h-6 w-6" />
           </a>
         </div>
-        <div className="flex justify-end items-center">
-          {wallet?.photoURL ? (
-            <Avatar src={wallet?.photoURL} />
+        <div className="flex flex-col self-center justify-end items-center pt-4">
+          {initData ? (
+            <span>
+              {initData.user?.firstName + " " + initData.user?.lastName}
+            </span>
           ) : (
-            <Avatar acronym="??" />
+            <span>Unknown user</span>
           )}
           {userFriendlyAddress ? (
             <div className="inline-flex w-32 gap-1 bg-slate-600 rounded-lg p-2">
@@ -58,7 +62,7 @@ export function Header() {
               />
             </div>
           ) : (
-            <div className="inline-flex w-32 gap-1 bg-slate-600 rounded-lg p-2">
+            <div className="inline-flex w-32 gap-1 bg-slate-600 rounded-lg p-1">
               <button className="self-center" onClick={connectWallet}>
                 Connect wallet
               </button>
@@ -69,9 +73,9 @@ export function Header() {
           onClick={() => {
             navigate("/Settings");
           }}
-          className="h-full inline-flex items-start justify-end p-2"
+          className="h-full inline-flex self-start items-start justify-end p-2"
         >
-          <Cog6ToothIcon className="w-12 h-12" />
+          <Cog6ToothIcon className="w-6 h-6" />
         </button>
       </nav>
     </header>

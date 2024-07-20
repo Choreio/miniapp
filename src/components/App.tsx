@@ -15,7 +15,7 @@ import { Navigate, Route, Router, Routes } from "react-router-dom";
 
 import { routes } from "@/navigation/routes.tsx";
 import { Header } from "@/pages/Nav/Header";
-import Footer from "@/pages/Nav/Footer";
+import { Navigation } from "@/pages/Nav/Navigation";
 
 export const App: FC = () => {
   const lp = useLaunchParams();
@@ -54,13 +54,13 @@ export const App: FC = () => {
     >
       <Router location={location} navigator={reactNavigator}>
         <Header />
+        <Navigation />
         <Routes>
           {routes.map((route) => (
             <Route key={route.path} {...route} />
           ))}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-        <Footer />
       </Router>
     </AppRoot>
   );

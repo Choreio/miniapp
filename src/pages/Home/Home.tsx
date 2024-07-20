@@ -23,7 +23,7 @@ export const Home: FC = () => {
 
   return (
     <div className="md:container md:mx-auto text-center">
-      <div className="pt-4 h-full pb-96">
+      <div className="pt-4 h-full home">
         <h1 className="text-6xl">Soon...</h1>
       </div>
     </div>
