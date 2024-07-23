@@ -1,36 +1,43 @@
 import {
   useTonConnectUI,
   useTonAddress,
-  useTonWallet,
+  WalletsModalState,
 } from "@tonconnect/ui-react";
 import logo from "./logo-Photoroom.png";
 
-import {
-  ArrowRightEndOnRectangleIcon,
-  Cog6ToothIcon,
-} from "@heroicons/react/24/solid";
+import { Cog6ToothIcon } from "@heroicons/react/24/solid";
 import { useInitData } from "@telegram-apps/sdk-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Spinner } from "@telegram-apps/telegram-ui";
 
 export function Header() {
   //const initData = useInitData();
   //const wallet = useTonWallet();
-  const userFriendlyAddress = useTonAddress(); //|| "DebguValue";
-  const wallet = useTonWallet();
   const initData = useInitData();
   const [tonConnectUI] = useTonConnectUI();
   const navigate = useNavigate();
+  const location = useLocation();
 
+  const userFriendlyAddress = useTonAddress(); // || "DebguValue";
+  const [connecting, setConnecting] = useState(false);
+
+  function changeConnecting(state: WalletsModalState) {
+    setConnecting(state.status === "opened" ? true : false);
+  }
+  var modalStateChangeUnsubscribe =
+    tonConnectUI.onModalStateChange(changeConnecting);
+  if (userFriendlyAddress) {
+    modalStateChangeUnsubscribe();
+  }
   async function connectWallet() {
+    setConnecting(true);
+    modalStateChangeUnsubscribe =
+      tonConnectUI.onModalStateChange(changeConnecting);
     await tonConnectUI.openModal();
   }
-
-  async function disconnectWallet() {
-    await tonConnectUI.disconnect();
-  }
-
   return (
-    <header className="inset-x-0 top-0 z-49 pb-2">
+    <header className="inset-x-0 top-0 z-49 pb-2 bg-[--tg-bg-color]">
       <nav
         aria-label="Global"
         className="w-full flex items-center justify-between"
@@ -50,32 +57,35 @@ export function Header() {
             <span>Unknown user</span>
           )}
           {userFriendlyAddress ? (
-            <div className="inline-flex w-32 gap-1 bg-slate-600 rounded-lg p-2">
-              <span className="self-center">
+            <div className="w-32 gap-1 rounded-lg p-0.5 text-center">
+              <span className="self-center text-[--tg-theme-subtitle-text-color]">
                 {userFriendlyAddress.slice(0, 4) +
                   "..." +
                   userFriendlyAddress.slice(-5, -1)}
               </span>
-              <ArrowRightEndOnRectangleIcon
-                className="cursor-pointer h-6 self-end"
-                onClick={disconnectWallet}
-              />
             </div>
           ) : (
-            <div className="inline-flex w-32 gap-1 bg-slate-600 rounded-lg p-1">
-              <button className="self-center" onClick={connectWallet}>
-                Connect wallet
-              </button>
-            </div>
+            <button
+              className="flex w-32 bg-[--tg-theme-button-color] rounded-lg p-1 justify-center text-center select-none cursor-pointer hover:bg-[--tg-theme-accent-text-color]"
+              onClick={connectWallet}
+            >
+              {!connecting ? <>Connect wallet</> : <Spinner size="s" />}
+            </button>
           )}
         </div>
         <button
           onClick={() => {
-            navigate("/Settings");
+            navigate("/settings");
           }}
           className="h-full inline-flex self-start items-start justify-end p-2"
         >
-          <Cog6ToothIcon className="w-6 h-6" />
+          <Cog6ToothIcon
+            className={
+              location.pathname === "/settings"
+                ? "text-[--tg-theme-accent-text-color] w-6 h-6"
+                : "w-6 h-6"
+            }
+          />
         </button>
       </nav>
     </header>

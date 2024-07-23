@@ -5,59 +5,52 @@ import {
   MapIcon,
   UserIcon,
 } from "@heroicons/react/24/solid";
-import { useNavigate } from "react-router-dom";
+import { Route } from "react-router-dom";
+import { NavButton } from "./NavButton";
+
+type Route = {
+  to: string;
+  icon: React.ReactNode;
+  title: string;
+};
 
 export function Navigation() {
-  //const initData = useInitData();
-  //const wallet = useTonWallet();
-
-  const navigate = useNavigate();
+  const routes: Route[] = [
+    {
+      to: "profile",
+      icon: <UserIcon />,
+      title: "Profile",
+    },
+    {
+      to: "map",
+      icon: <MapIcon />,
+      title: "Map",
+    },
+    {
+      to: "",
+      icon: <HomeIcon />,
+      title: "Home",
+    },
+    {
+      to: "tasks",
+      icon: <BriefcaseIcon />,
+      title: "Tasks",
+    },
+    {
+      to: "chat",
+      icon: <ChatBubbleBottomCenterTextIcon />,
+      title: "Chat",
+    },
+  ];
   return (
     <footer className="sticky top-0 inset-x-0 z-49 bg-[--tg-bg-color] rounded-b-lg">
       <nav
         aria-label="Global"
-        className="inline-flex justify-between items-end w-full h-16 gap-px"
+        className="flex w-full justify-between h-16 gap-px pr-2 pl-2"
       >
-        <button
-          onClick={() => {
-            navigate("/profile");
-          }}
-          className="w-1/5 h-full inline-flex items-center justify-center p-2"
-        >
-          <UserIcon className="h-2/3" />
-        </button>
-        <button
-          onClick={() => {
-            navigate("/map");
-          }}
-          className="w-1/5 h-full inline-flex items-center justify-center p-2"
-        >
-          <MapIcon className="h-2/3" />
-        </button>
-        <button
-          onClick={() => {
-            navigate("/");
-          }}
-          className="w-1/5 h-full inline-flex items-center justify-center p-2"
-        >
-          <HomeIcon className="h-2/3" />
-        </button>
-        <button
-          onClick={() => {
-            navigate("/tasks");
-          }}
-          className="w-1/5 h-full inline-flex items-center justify-center p-2"
-        >
-          <BriefcaseIcon className="h-2/3" />
-        </button>
-        <button
-          onClick={() => {
-            navigate("/chat");
-          }}
-          className="w-1/5 h-full inline-flex items-center justify-center p-2"
-        >
-          <ChatBubbleBottomCenterTextIcon className="h-2/3" />
-        </button>
+        {routes.map(({ to, icon, title }) => {
+          return <NavButton key={title} to={to} icon={icon} title={title} />;
+        })}
       </nav>
     </footer>
   );

@@ -4,20 +4,21 @@ import {
   bindThemeParamsCSSVars,
   bindViewportCSSVars,
   initNavigator,
+  postEvent,
   useLaunchParams,
   useMiniApp,
   useThemeParams,
   useViewport,
 } from "@telegram-apps/sdk-react";
 import { AppRoot } from "@telegram-apps/telegram-ui";
-import { type FC, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Navigate, Route, Router, Routes } from "react-router-dom";
 
 import { routes } from "@/navigation/routes.tsx";
 import { Header } from "@/pages/Nav/Header";
 import { Navigation } from "@/pages/Nav/Navigation";
 
-export const App: FC = () => {
+export function App() {
   const lp = useLaunchParams();
   const miniApp = useMiniApp();
   const themeParams = useThemeParams();
@@ -47,6 +48,9 @@ export const App: FC = () => {
     return () => navigator.detach();
   }, [navigator]);
 
+  postEvent("web_app_setup_back_button", { is_visible: false });
+  postEvent("web_app_expand");
+
   return (
     <AppRoot
       appearance={miniApp.isDark ? "dark" : "light"}
@@ -64,4 +68,4 @@ export const App: FC = () => {
       </Router>
     </AppRoot>
   );
-};
+}

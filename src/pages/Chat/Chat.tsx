@@ -2,12 +2,10 @@ import { type FC } from "react";
 import { useInitData } from "@telegram-apps/sdk-react";
 
 import { Placeholder } from "@telegram-apps/telegram-ui";
-import { tasks } from "@/store/store";
-import { TaskCard } from "./TaskCard";
 
-export const Tasks: FC = () => {
+export const Chat: FC = () => {
   const initData = useInitData();
-  const currentTasks = tasks;
+
   if (!initData) {
     return (
       <Placeholder
@@ -25,19 +23,8 @@ export const Tasks: FC = () => {
 
   return (
     <div className="md:container md:mx-auto text-center">
-      <div className="flex flex-col gap-2 p-4 h-full">
-        <div className="text-4xl pb-2">Задания рядом</div>
-        {currentTasks.map((task) => {
-          return (
-            <TaskCard
-              name={task.name}
-              description={task.description}
-              price={task.price}
-              currency={task.currency}
-              location={null}
-            />
-          );
-        })}
+      <div className="pt-4 h-full">
+        <h1 className="text-6xl">Chat will be added soon...</h1>
       </div>
     </div>
   );
