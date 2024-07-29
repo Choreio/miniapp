@@ -2,7 +2,7 @@ import { type FC } from "react";
 import { useInitData } from "@telegram-apps/sdk-react";
 
 import { Placeholder } from "@telegram-apps/telegram-ui";
-import { tasks } from "@/store/store";
+import { tasks } from "@/store/storeTemp";
 import { TaskCard } from "./TaskCard";
 
 export const Tasks: FC = () => {
@@ -25,11 +25,13 @@ export const Tasks: FC = () => {
 
   return (
     <div className="md:container md:mx-auto text-center">
-      <div className="flex flex-col gap-2 p-4 h-full">
+      <div className="flex flex-col pt-4 md:pl-4 md:pr-4 h-full">
         <div className="text-4xl pb-2">Задания рядом</div>
         {currentTasks.map((task) => {
           return (
             <TaskCard
+              key={task.id}
+              id={task.id}
               name={task.name}
               description={task.description}
               price={task.price}

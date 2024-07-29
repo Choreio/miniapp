@@ -2,9 +2,13 @@ import { type FC } from "react";
 import { useInitData } from "@telegram-apps/sdk-react";
 
 import { Placeholder } from "@telegram-apps/telegram-ui";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/userSlice";
 
 export const Profile: FC = () => {
   const initData = useInitData();
+
+  const user = useAppSelector(selectUser);
 
   if (!initData) {
     return (
@@ -22,9 +26,16 @@ export const Profile: FC = () => {
   }
 
   return (
-    <div className="md:container md:mx-auto text-center">
-      <div className="pt-4 h-full">
-        <h1 className="text-6xl">Profile will be added soon...</h1>
+    <div className="md:container md:mx-auto">
+      <div className="flex flex-col h-full p-4 gap-2">
+        <h1 className="text-6xl text-center">Your profile</h1>
+        <span>User id: {user.id}</span>
+        <span>Username: {user?.username}</span>
+        <span>
+          Name: {user.firstName} {user?.lastName}
+        </span>
+        <span>Photo: {user?.photoUrl}</span>
+        <span>Locale: {user?.languageCode}</span>
       </div>
     </div>
   );

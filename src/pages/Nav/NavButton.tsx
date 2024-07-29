@@ -11,15 +11,17 @@ export const NavButton: FC<NavButtonProps> = ({ to, icon, title }) => {
   const location = useLocation();
   const className =
     "h-full w-full inline-flex flex-col items-center justify-center p-2";
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    location.pathname === to
+      ? window.scrollTo({ top: 0, behavior: "smooth" })
+      : navigate(to);
+  };
   return (
     <button
-      onClick={() => {
-        navigate("/" + to);
-      }}
+      onClick={handleClick}
       className={className.concat(
-        location.pathname === "/" + to
-          ? " text-[--tg-theme-accent-text-color]"
-          : ""
+        location.pathname === to ? " text-[--tg-theme-accent-text-color]" : ""
       )}
     >
       {icon}

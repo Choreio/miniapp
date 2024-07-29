@@ -1,20 +1,28 @@
 import { useInitData } from "@telegram-apps/sdk-react";
 import { Placeholder } from "@telegram-apps/telegram-ui";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useGeolocated } from "react-geolocated";
 
-const MapContainer = React.lazy(() =>
-  import("./MapContainer").then(({ MapContainer }) => ({
-    default: MapContainer,
+//const MapContainerYandex = React.lazy(() =>
+//  import("./MapContainerYandex").then(({ MapContainerYandex }) => ({
+//   default: MapContainerYandex,
+//  }))
+//);
+const MapContainerLeafets = React.lazy(() =>
+  import("./MapContainerLeafets").then(({ MapContainerLeafets }) => ({
+    default: MapContainerLeafets,
   }))
 );
+
 export function MapPage() {
   const initData = useInitData();
+
   const {
     coords,
     isGeolocationAvailable,
     isGeolocationEnabled,
     positionError,
+    getPosition,
   } = useGeolocated({
     positionOptions: {
       enableHighAccuracy: true,
@@ -37,8 +45,10 @@ export function MapPage() {
       .then(function (result) {
         if (result.state == "granted") {
           console.log(result.state);
+          getPosition();
         } else if (result.state == "prompt") {
           console.log(result.state);
+          getPosition();
         } else if (result.state == "denied") {
           console.log(result.state);
         }
@@ -63,7 +73,7 @@ export function MapPage() {
   }
 
   return (
-    <div className="md:container md:mx-auto text-center">
+    <div className="text-center">
       <div className="text-4xl pt-4">Tasks around you</div>
       <div className="text-slate-400">
         You are looking for tasks in{" "}
@@ -105,11 +115,17 @@ export function MapPage() {
         </div>
       )}
       {coords && (
-        <MapContainer
-          latitude={coords.latitude}
-          longitude={coords.longitude}
-          radius={radius}
-        />
+        <Suspense
+          fallback={
+            <div className="w-full h-[--tg-viewport-width] bg-slate-300 rounded-full overflow-hidden"></div>
+          }
+        >
+          <MapContainerLeafets
+            latitude={coords.latitude}
+            longitude={coords.longitude}
+            radius={radius}
+          />
+        </Suspense>
       )}
     </div>
   );

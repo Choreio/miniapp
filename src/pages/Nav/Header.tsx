@@ -25,7 +25,7 @@ export function Header() {
   function changeConnecting(state: WalletsModalState) {
     setConnecting(state.status === "opened" ? true : false);
   }
-  var modalStateChangeUnsubscribe =
+  let modalStateChangeUnsubscribe =
     tonConnectUI.onModalStateChange(changeConnecting);
   if (userFriendlyAddress) {
     modalStateChangeUnsubscribe();
@@ -75,7 +75,9 @@ export function Header() {
         </div>
         <button
           onClick={() => {
-            navigate("/settings");
+            location.pathname === "/settings"
+              ? window.scrollTo({ top: 0, behavior: "smooth" })
+              : navigate("/settings");
           }}
           className="h-full inline-flex self-start items-start justify-end p-2"
         >

@@ -8,16 +8,21 @@ type MapProps = {
   longitude: number;
   radius: number;
 };
-export const MapContainer: FC<MapProps> = ({ latitude, longitude, radius }) => {
+export const MapContainerYandex: FC<MapProps> = ({
+  latitude,
+  longitude,
+  radius,
+}) => {
   return (
     <YMaps>
       <div className="p-2">
         <Map
-          className="w-full h-96 rounded-full overflow-hidden"
+          className="flex w-full h-[--tg-viewport-width] rounded-full overflow-hidden z-0"
           defaultState={{
             center: [latitude, longitude],
             zoom: 12.5,
           }}
+          options={{ autoFitToViewport: "always" }}
         >
           <Placemark
             id="self"
