@@ -15,13 +15,15 @@ export const MapContainerYandex: FC<MapProps> = ({
 }) => {
   return (
     <YMaps>
-      <div className="p-2">
+      <div className="p-2 w-full h-[--tg-viewport-width] overflow-hidden z-0">
         <Map
-          className="flex w-full h-[--tg-viewport-width] rounded-full overflow-hidden z-0"
+          className="flex w-full h-[--tg-viewport-width] overflow-hidden z-0"
           defaultState={{
             center: [latitude, longitude],
             zoom: 12.5,
+            controls: ["zoomControl", "fullscreenControl"],
           }}
+          modules={["control.ZoomControl", "control.FullscreenControl"]}
           options={{ autoFitToViewport: "always" }}
         >
           <Placemark

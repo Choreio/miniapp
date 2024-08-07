@@ -12,7 +12,6 @@ import { useState } from "react";
 import { Spinner } from "@telegram-apps/telegram-ui";
 
 export function Header() {
-  //const initData = useInitData();
   //const wallet = useTonWallet();
   const initData = useInitData();
   const [tonConnectUI] = useTonConnectUI();
@@ -38,17 +37,14 @@ export function Header() {
   }
   return (
     <header className="inset-x-0 top-0 z-49 pb-2 bg-[--tg-bg-color]">
-      <nav
-        aria-label="Global"
-        className="w-full flex items-center justify-between"
-      >
-        <div className="h-full inline-flex self-start items-start justify-end p-2">
-          <a href="#" className="-m-1.5 p-1">
+      <nav aria-label="Global" className="w-full p-2 flex justify-between">
+        <div className="h-full inline-flex items-center justify-center p-2">
+          <a href="/" className="-m-1.5 p-1">
             <span className="sr-only">Chores</span>
-            <img alt="" src={logo} className="h-6 w-6" />
+            <img alt="" src={logo} className="h-12 w-12" />
           </a>
         </div>
-        <div className="flex flex-col self-center justify-end items-center pt-4">
+        <div className="relative flex flex-col self-center justify-end items-center pt-4">
           {initData ? (
             <span>
               {initData.user?.firstName + " " + initData.user?.lastName}
@@ -57,7 +53,7 @@ export function Header() {
             <span>Unknown user</span>
           )}
           {userFriendlyAddress ? (
-            <div className="w-32 gap-1 rounded-lg p-0.5 text-center">
+            <div className="w-32 gap-1 rounded-lg text-center">
               <span className="self-center text-[--tg-theme-subtitle-text-color]">
                 {userFriendlyAddress.slice(0, 4) +
                   "..." +
@@ -66,29 +62,31 @@ export function Header() {
             </div>
           ) : (
             <button
-              className="flex w-32 bg-[--tg-theme-button-color] rounded-lg p-1 justify-center text-center select-none cursor-pointer hover:bg-[--tg-theme-accent-text-color]"
+              className="relative flex w-32 bg-[--tg-theme-button-color] rounded-lg justify-center text-center select-none cursor-pointer hover:bg-[--tg-theme-accent-text-color]"
               onClick={connectWallet}
             >
               {!connecting ? <>Connect wallet</> : <Spinner size="s" />}
             </button>
           )}
         </div>
-        <button
-          onClick={() => {
-            location.pathname === "/settings"
-              ? window.scrollTo({ top: 0, behavior: "smooth" })
-              : navigate("/settings");
-          }}
-          className="h-full inline-flex self-start items-start justify-end p-2"
-        >
-          <Cog6ToothIcon
-            className={
+        <div className="relative h-full inline-flex items-end justify-center p-2">
+          <button
+            onClick={() => {
               location.pathname === "/settings"
-                ? "text-[--tg-theme-accent-text-color] w-6 h-6"
-                : "w-6 h-6"
-            }
-          />
-        </button>
+                ? window.scrollTo({ top: 0, behavior: "smooth" })
+                : navigate("/settings");
+            }}
+            className="-m-1.5 p-1 h-12 w-12 self-end"
+          >
+            <Cog6ToothIcon
+              className={
+                location.pathname === "/settings"
+                  ? "text-[--tg-theme-accent-text-color] w-6 h-6"
+                  : "w-6 h-6"
+              }
+            />
+          </button>
+        </div>
       </nav>
     </header>
   );

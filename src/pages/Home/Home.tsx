@@ -1,64 +1,37 @@
+import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import { type FC } from "react";
-import { useThemeParams } from "@telegram-apps/sdk-react";
-
-import { RGB } from "./RGB";
 
 export const Home: FC = () => {
-  const themeParams = useThemeParams();
-
+  const wallet = useTonWallet();
+  const [tonConnectUI] = useTonConnectUI();
+  const transaction = {
+    validUntil: Math.floor(Date.now() / 1000) + 360,
+    messages: [
+      {
+        address: "UQCgGHViuIgfLhU1wvvS6ceUaqIfPekvE3xSA1uzV6GAf0kO",
+        amount: "100000000",
+      },
+    ],
+  };
+  const donate = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    tonConnectUI.sendTransaction(transaction);
+  };
   return (
-    <div className="md:container md:mx-auto text-center">
-      <div className="pt-4 h-full">
+    <div className="md:container md:mx-auto text-center h-full">
+      <div className="pt-4">
         <h1 className="text-6xl">Soon...</h1>
       </div>
-      <div className="flex flex-col items-start p-6">
-        <span className="text-4xl">Debug section</span>
-        <span>
-          accentTextColor: <RGB color={themeParams?.accentTextColor} />
-        </span>
-        <span>
-          bgColor: <RGB color={themeParams.bgColor} />
-        </span>
-        <span>
-          buttonColor: <RGB color={themeParams.buttonColor} />
-        </span>
-        <span>
-          buttonTextColor: <RGB color={themeParams.buttonTextColor} />
-        </span>
-        <span>
-          destructiveTextColor: <RGB color={themeParams.destructiveTextColor} />
-        </span>
-        <span>
-          headerBgColor: <RGB color={themeParams.headerBgColor} />
-        </span>
-        <span>
-          hintColor: <RGB color={themeParams.hintColor} />
-        </span>
-        <span>isDark: {themeParams.isDark ? "TRUE" : "FALSE"}</span>
-        <span>
-          linkColor: <RGB color={themeParams.linkColor} />
-        </span>
-        <span>
-          secondaryBgColor: <RGB color={themeParams.secondaryBgColor} />
-        </span>
-        <span>
-          sectionBgColor: <RGB color={themeParams.sectionBgColor} />
-        </span>
-        <span>
-          sectionHeaderTextColor:{" "}
-          <RGB color={themeParams.sectionHeaderTextColor} />
-        </span>
-        <span>
-          sectionSeparatorColor:{" "}
-          <RGB color={themeParams.sectionSeparatorColor} />
-        </span>
-        <span>
-          subtitleTextColor: <RGB color={themeParams.subtitleTextColor} />
-        </span>
-        <span>
-          textColor: <RGB color={themeParams.textColor} />
-        </span>
-      </div>
+      {wallet && (
+        <div>
+          <button
+            className="w-32 h-8 bg-blue-500 rounded-xl shadow-md hover:bg-blue-600"
+            onClick={donate}
+          >
+            Support us
+          </button>
+        </div>
+      )}
     </div>
   );
 };

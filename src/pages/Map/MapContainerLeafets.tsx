@@ -35,13 +35,9 @@ function LocationMarker() {
 
 export const MapContainerLeafets: FC<MapProps> = ({ latitude, longitude }) => {
   return (
-    <div className="flex w-full h-96">
+    <div className="p-2 w-full h-[--tg-viewport-width] overflow-hidden z-0">
       <MapContainer
-        style={{
-          height: "100%",
-          width: "100%",
-          alignSelf: "center",
-        }}
+        className="w-full h-[--tg-viewport-width] overflow-hidden z-0"
         center={[latitude, longitude]}
         zoom={13}
         zoomControl={false}

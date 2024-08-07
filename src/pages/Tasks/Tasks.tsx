@@ -1,13 +1,38 @@
-import { type FC } from "react";
 import { useInitData } from "@telegram-apps/sdk-react";
 
-import { Placeholder } from "@telegram-apps/telegram-ui";
-import { tasks } from "@/store/storeTemp";
-import { TaskCard } from "./TaskCard";
+import {
+  Placeholder,
+  Section,
+  SegmentedControl,
+} from "@telegram-apps/telegram-ui";
+import { SectionHeader } from "@telegram-apps/telegram-ui/dist/components/Blocks/Section/components/SectionHeader/SectionHeader";
+import { FC, useEffect, useState } from "react";
+import { SegmentedControlItem } from "@telegram-apps/telegram-ui/dist/components/Navigation/SegmentedControl/components/SegmentedControlItem/SegmentedControlItem";
+import { Outlet, useNavigate } from "react-router-dom";
 
 export const Tasks: FC = () => {
   const initData = useInitData();
-  const currentTasks = tasks;
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("available");
+  const taskTabs = [
+    { id: "available", name: "Available" },
+    { id: "active", name: "Active" },
+    { id: "created", name: "Created" },
+  ];
+  const handleTabClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    console.log("Changing active tab");
+    console.log("New active tab: " + e.currentTarget.id);
+    setActiveTab(e.currentTarget.id);
+    navigate("tasks/" + e.currentTarget.id);
+  };
+  useEffect(() => {
+    navigate("tasks/" + activeTab);
+
+    return () => {
+      console.log("Moved to: " + activeTab);
+    };
+  }, [activeTab]);
+
   if (!initData) {
     return (
       <Placeholder
@@ -25,22 +50,29 @@ export const Tasks: FC = () => {
 
   return (
     <div className="md:container md:mx-auto text-center">
-      <div className="flex flex-col pt-4 md:pl-4 md:pr-4 h-full">
-        <div className="text-4xl pb-2">Задания рядом</div>
-        {currentTasks.map((task) => {
-          return (
-            <TaskCard
-              key={task.id}
-              id={task.id}
-              name={task.name}
-              description={task.description}
-              price={task.price}
-              currency={task.currency}
-              location={null}
-            />
-          );
-        })}
-      </div>
+      <Section
+        className="pt-4 h-full"
+        header={
+          <SectionHeader>
+            <SegmentedControl className="flex justify-around fill-current">
+              {taskTabs.map((tab) => {
+                return (
+                  <SegmentedControlItem
+                    id={tab.id}
+                    key={tab.id}
+                    onClick={handleTabClick}
+                    selected={activeTab === tab.id}
+                  >
+                    {tab.name}
+                  </SegmentedControlItem>
+                );
+              })}
+            </SegmentedControl>
+          </SectionHeader>
+        }
+      >
+        <Outlet />
+      </Section>
     </div>
   );
 };

@@ -1,56 +1,99 @@
-import { getTranslateValues } from "@/components/getTranslateValues";
-import { TaskInfo } from "@/types";
-import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import { Cell, Modal } from "@telegram-apps/telegram-ui";
+import { TaskState } from "@/store/slices/tasksSlice";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import { initPopup } from "@telegram-apps/sdk";
+import {
+  Avatar,
+  Cell,
+  Button,
+  Modal,
+  Section,
+} from "@telegram-apps/telegram-ui";
+import { SectionHeader } from "@telegram-apps/telegram-ui/dist/components/Blocks/Section/components/SectionHeader/SectionHeader";
 import { ModalHeader } from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalHeader/ModalHeader";
-import { FC, useEffect, useState } from "react";
 
-type TouchState = {
+import { FC, useState } from "react";
+
+/*type TouchState = {
   x_start: number;
   translateX: number;
-  x_end: number;
   direction: string;
-};
+};*/
 
-export const TaskCard: FC<TaskInfo> = ({
+export const TaskCardMini: FC<TaskState> = ({
   id,
-  name,
-  description,
-  price,
-  currency,
+  specials,
+  title,
+  desc,
+  reward,
+  customer,
+  attachments,
 }) => {
-  const [currentSwipe, setCurrentSwipe] = useState({
-    x_start: 0,
-    x_end: 0,
-    translateX: 0,
-    direction: "none",
-  } as TouchState);
-  const [cardHeight, setCardHeight] = useState(32);
   const [openModal, setOpenModal] = useState(false);
+  const [acceptButtonLoading, setAcceptButtonLoading] = useState(false);
+  const [dismissButtonLoading, setDismissButtonLoading] = useState(false);
+
+  const popup = initPopup();
+  const openPopup = (title: string, message: string) => {
+    console.log("Called open popup");
+    popup
+      .open({
+        title: title,
+        message: message,
+        buttons: [
+          { id: "confirm-button", type: "ok" },
+          { id: "decline-button", type: "cancel" },
+        ],
+      })
+      .then((buttonId) => {
+        console.log(
+          buttonId === null
+            ? "User did not click any button"
+            : `User clicked a button with ID "${buttonId}"`
+        );
+      });
+    console.log(popup.isOpened); // true
+  };
+  //Remove due TG web app behavior
+  /*const [sidemenu, setSideMenu] = useState(
+    document.getElementById("sidebuttondiv" + id)
+  );
+
   useEffect(() => {
-    const h = document.getElementById(id.toString())?.offsetHeight;
-    setCardHeight(h || 32);
+    const sidemenu = document.getElementById("sidebuttondiv" + id);
+    setSideMenu(sidemenu || null);
 
     return () => {
       //console.log("Height: " + h);
     };
-  }, [cardHeight]);
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+  }, [sidemenu]);
+  const [currentSwipe, setCurrentSwipe] = useState({
+    x_start: 0,
+    translateX: 0,
+    direction: "none",
+  } as TouchState);
+  const handleTouchStart = (
+    e: React.TouchEvent<HTMLDivElement | HTMLSpanElement | SVGSVGElement>
+  ) => {
     e.currentTarget.focus();
-    e.currentTarget.style.transition = "all 0.3s";
+    e.currentTarget.style.transition = "all 0.09s";
+    if (sidemenu) sidemenu.style.transition = "all 0.09s";
     setCurrentSwipe({
       ...currentSwipe,
-      x_start: e.targetTouches[0].pageX,
+      x_start: e.targetTouches[0].clientX,
     });
     console.log("Touch started: " + currentSwipe.x_start);
   };
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchMove = (
+    e: React.TouchEvent<HTMLDivElement | HTMLSpanElement>
+  ) => {
     e.currentTarget.focus();
-    const x = e.targetTouches[0].pageX;
+    const x = e.targetTouches[0].clientX;
     const diff = Math.round(x - currentSwipe.x_start);
-    if (Number(getTranslateValues(e.currentTarget)?.x) || 0 <= 0)
-      e.currentTarget.style.transform = `translateX(${
+    e.currentTarget.style.transform = `translateX(${
+      currentSwipe.translateX + diff
+    }px)`;
+    if (sidemenu)
+      sidemenu.style.transform = `translateX(${
         currentSwipe.translateX + diff
       }px)`;
     if (diff < 0) {
@@ -59,44 +102,43 @@ export const TaskCard: FC<TaskInfo> = ({
     if (diff > 0) {
       setCurrentSwipe({ ...currentSwipe, direction: "right" });
     }
-    if (diff === 0) {
-      setCurrentSwipe({ ...currentSwipe, direction: "none" });
-    }
     console.log("Touch moving diffX: " + diff);
   };
-  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+  const handleTouchEnd = (
+    e: React.TouchEvent<HTMLDivElement | HTMLSpanElement>
+  ) => {
     e.preventDefault();
     //get current translate
     let translateX = Number(getTranslateValues(e.currentTarget)?.x || 0);
-    //If user clicked it, open modal with full info
-    if (currentSwipe.direction === "none" && translateX === 0) {
-      hanleOpenModal();
-    }
     //help close fast sidemenu
-    if (translateX > -110 && currentSwipe.direction === "right") {
+    if (translateX > -115 && currentSwipe.direction === "right") {
       translateX = 0;
       e.currentTarget.style.transform = `translateX(${translateX}px)`;
+      if (sidemenu) sidemenu.style.transform = `translateX(${translateX}px)`;
       console.log("Assisted closing");
     }
 
     //fake or mistake swipe right handle
-    if (translateX < -110 && currentSwipe.direction === "right") {
+    if (translateX < -115 && currentSwipe.direction === "right") {
       translateX = -128;
       e.currentTarget.style.transform = `translateX(${translateX}px)`;
+      if (sidemenu) sidemenu.style.transform = `translateX(${translateX}px)`;
       console.log("Mistaken closing");
     }
 
     //Help to open fast sidemenu
-    if (translateX < -20 && currentSwipe.direction === "left") {
+    if (translateX < -15 && currentSwipe.direction === "left") {
       translateX = -128;
       e.currentTarget.style.transform = `translateX(${translateX}px)`;
+      if (sidemenu) sidemenu.style.transform = `translateX(${translateX}px)`;
       console.log("Assisted opening");
     }
 
     //fake or mistake swipe left handle
-    if (translateX > -20 && currentSwipe.direction === "left") {
+    if (translateX > -15 && currentSwipe.direction === "left") {
       translateX = 0;
       e.currentTarget.style.transform = `translateX(${translateX}px)`;
+      if (sidemenu) sidemenu.style.transform = `translateX(${translateX}px)`;
       console.log("Mistaken opening");
     }
     setCurrentSwipe({
@@ -106,88 +148,136 @@ export const TaskCard: FC<TaskInfo> = ({
     });
     console.log("Touch ended");
   };
-  const handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+  const handleBlur = (
+    e: React.FocusEvent<HTMLDivElement | HTMLSpanElement>
+  ) => {
     const translateX = 0;
     e.currentTarget.style.transform = `translateX(${translateX}px)`;
+    if (sidemenu) sidemenu.style.transform = `translateX(${translateX}px)`;
     setCurrentSwipe({ ...currentSwipe, translateX: translateX });
     //console.log("Focus lost");
+  };
+  */
+
+  const handleClickAccept = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    console.log("Clicked accept");
+    setAcceptButtonLoading(true);
+    openPopup("Warning!", "Are you sure want to accept this task?");
+    setTimeout(() => {
+      console.log("Do something about 5 secs");
+      handleCloseModal();
+      setAcceptButtonLoading(false);
+    }, 2000);
+  };
+  const handleClickDismiss = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    console.log("Clicked dismiss");
+    setDismissButtonLoading(true);
+    await setTimeout(() => {
+      console.log("Do something about 5 secs");
+      handleCloseModal();
+      setDismissButtonLoading(false);
+    }, 5000);
   };
   const handleClickCard = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     console.log("Card clicked");
-    hanleOpenModal();
+    handleOpenModal();
   };
-  const handleClickConfirm = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    console.log("Clicked COnfirm");
-  };
-  const handleClickCancel = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    console.log("Clicked Cancel");
-  };
-  const hanleOpenModal = () => {
+  const handleOpenModal = () => {
     setOpenModal(true);
     console.log("Modal opened");
   };
-  //const handleCloseModal = () => {
-  //  setOpenModal(false);
-  //  console.log("Modal closed");
-  //};
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    console.log("Modal closed");
+  };
   return (
-    <div className="flex overflow-hidden bg-[--tg-theme-section-bg-color] border-b">
-      {
-        //<div className="left-0 inline-flex focus:outline-none" id={id.toString()}>
-      }
+    <div className="flex overflow-hidden justify-stretch bg-[--tg-theme-section-bg-color]">
       <Cell
-        tabIndex={-1}
-        id={id.toString()}
-        className="w-screen md:w-full z-[6] bg-[--tg-theme-section-bg-color] shadow-lg outline-none"
-        multiline={true}
-        description={description}
-        after={
-          <span>
-            {price} {currency}
-          </span>
+        before={<Avatar>CS</Avatar>}
+        id={id}
+        className="w-full md:w-full z-[6] bg-[--tg-theme-section-bg-color] shadow-lg outline-none select-none"
+        multiline={false}
+        description={desc}
+        after={<span>{reward}</span>}
+        titleBadge={
+          specials && (
+            <div className="bg-red-500 rounded-xl text-xs pl-1 pr-1">
+              {specials}
+            </div>
+          )
         }
+        //Remove due TG web app behavior
+        /*
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onBlur={handleBlur}
+        */
+
         onClick={handleClickCard}
       >
-        {name}
+        {title}
       </Cell>
-      {
-        //</div>
-      }
-      <div
-        className="fixed right-0 flex w-32 z-[5] md:hidden"
-        style={{ height: cardHeight }}
-      >
-        <div
-          className="flex justify-center items-center w-1/2 text-center border-r border-gray-700 bg-green-700"
-          onClick={handleClickConfirm}
-        >
-          <CheckIcon className="h-8 w-8" fill="currentColor" />
-        </div>
-        <div
-          className="flex justify-center items-center w-1/2 text-center bg-red-700"
-          onClick={handleClickCancel}
-        >
-          <XMarkIcon className="h-8 w-8" fill="currentColor" />
-        </div>
-      </div>
+
       <Modal
         open={openModal}
-        className="z-[9999] h-full bg-[--tg-theme-section-bg-color]"
-        header={<ModalHeader>{name}</ModalHeader>}
+        onOpenChange={(open) => {
+          setOpenModal(open);
+        }}
+        className="z-10 h-5/6 bg-[--tg-theme-section-bg-color]"
+        header={
+          <ModalHeader
+            after={
+              <XMarkIcon
+                className="text-[--tg-theme-plain-foreground] h-4"
+                onClick={handleCloseModal}
+              />
+            }
+          >
+            {title}
+          </ModalHeader>
+        }
       >
         <div className="flex flex-col gap-1">
-          <span>{name}</span>
-          <span>{description}</span>
-          <span>
-            {price} {currency}
-          </span>
+          <Section
+            className="flex flex-col gap-2 h-full"
+            header={<SectionHeader>Details</SectionHeader>}
+            footer={
+              <div className="w-full flex justify-around">
+                <Button
+                  className="bg-green-600 w-2/6"
+                  onClick={handleClickAccept}
+                  loading={acceptButtonLoading}
+                >
+                  Accept
+                </Button>
+                <Button
+                  className="bg-red-600 w-2/6"
+                  onClick={handleClickDismiss}
+                  loading={dismissButtonLoading}
+                >
+                  Decline
+                </Button>
+              </div>
+            }
+          >
+            <Cell subhead={"Title"}>{title}</Cell>
+            <Cell subhead={"Description"}>{desc}</Cell>
+            <Cell subhead={"Reward"}>
+              <span>{reward}</span>
+            </Cell>
+            {attachments && (
+              <Cell subhead={"Attachments"}>
+                <span>{attachments}</span>
+              </Cell>
+            )}
+            <Cell subhead={"Customer"}>
+              <span>{customer}</span>
+            </Cell>
+          </Section>
         </div>
       </Modal>
     </div>

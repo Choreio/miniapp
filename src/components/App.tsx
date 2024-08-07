@@ -3,8 +3,8 @@ import {
   bindMiniAppCSSVars,
   bindThemeParamsCSSVars,
   bindViewportCSSVars,
+  createPostEvent,
   initNavigator,
-  postEvent,
   useInitData,
   useLaunchParams,
   useMiniApp,
@@ -23,6 +23,8 @@ import { setUser, UserState } from "@/store/slices/userSlice";
 import { useDispatch } from "react-redux";
 
 import "leaflet/dist/leaflet.css";
+import { setLP, LPState, selectLP } from "@/store/slices/launchParametersSlice";
+import { useAppSelector } from "@/store/hooks";
 
 export function App() {
   const lp = useLaunchParams();
@@ -61,6 +63,20 @@ export function App() {
   };
   bindUser(initData.user);
 
+  const bindLP = (initLP: LPState | undefined) => {
+    if (initLP) {
+      const lp: LPState = {
+        botInline: initLP.botInline,
+        platform: initLP.platform,
+        showSettings: initLP.showSettings,
+        startParam: initLP.startParam,
+        version: initLP.version,
+      };
+      dispatch(setLP(lp));
+    }
+  };
+  bindLP(lp);
+
   useEffect(() => {
     return bindMiniAppCSSVars(miniApp, themeParams);
   }, [miniApp, themeParams]);
@@ -78,21 +94,28 @@ export function App() {
   const navigator = useMemo(() => initNavigator("app-navigation-state"), []);
   const [location, reactNavigator] = useIntegration(navigator);
 
-  // Don't forget to attach the navigator to allow it to control the BackButton state as well
-  // as browser history.
   useEffect(() => {
     navigator.attach();
     return () => navigator.detach();
   }, [navigator]);
 
+  const postEvent = createPostEvent("7.7");
+  postEvent("web_app_setup_swipe_behavior", { allow_vertical_swipe: false });
   postEvent("web_app_setup_back_button", { is_visible: false });
   postEvent("web_app_expand");
 
+  const launchParams = useAppSelector(selectLP);
   return (
     <AppRoot
+      id="APPROOT"
       appearance={miniApp.isDark ? "dark" : "light"}
-      platform={["macos", "ios"].includes(lp.platform) ? "ios" : "base"}
-      className="h-[--tg-viewport-height]"
+      platform={
+        ["macos", "ios"].includes(launchParams.platform) ? "ios" : "base"
+      }
+      style={{
+        maxHeight: viewport?.stableHeight,
+        minHeight: viewport?.stableHeight,
+      }}
     >
       <Router location={location} navigator={reactNavigator}>
         <Header />
@@ -106,7 +129,12 @@ export function App() {
         >
           <Routes>
             {routes.map((route) => (
-              <Route key={route.path} {...route} />
+              <Route key={route.path} {...route}>
+                {route.childrens &&
+                  route.childrens.map((child) => {
+                    return <Route key={child.path} {...child} />;
+                  })}
+              </Route>
             ))}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

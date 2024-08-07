@@ -31,7 +31,7 @@ export const userSlice = createSlice({
             state.photoUrl = action.payload?.photoUrl
         },
         setField: (state, action:PayloadAction<{field:string, value:string}>) => {
-            var field = action.payload.field;
+            const field = action.payload.field;
             switch(field.toLowerCase()){
                 case "id":{
                     state.id = action.payload.value

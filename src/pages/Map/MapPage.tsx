@@ -3,14 +3,21 @@ import { Placeholder } from "@telegram-apps/telegram-ui";
 import React, { Suspense, useState } from "react";
 import { useGeolocated } from "react-geolocated";
 
-//const MapContainerYandex = React.lazy(() =>
-//  import("./MapContainerYandex").then(({ MapContainerYandex }) => ({
-//   default: MapContainerYandex,
-//  }))
-//);
+const MapContainerYandex = React.lazy(() =>
+  import("./MapContainerYandex").then(({ MapContainerYandex }) => ({
+    default: MapContainerYandex,
+  }))
+);
+
 const MapContainerLeafets = React.lazy(() =>
   import("./MapContainerLeafets").then(({ MapContainerLeafets }) => ({
     default: MapContainerLeafets,
+  }))
+);
+
+const MapContainerGoogle = React.lazy(() =>
+  import("./MapContainerGoogle").then(({ MapContainerGoogle }) => ({
+    default: MapContainerGoogle,
   }))
 );
 
@@ -115,17 +122,41 @@ export function MapPage() {
         </div>
       )}
       {coords && (
-        <Suspense
-          fallback={
-            <div className="w-full h-[--tg-viewport-width] bg-slate-300 rounded-full overflow-hidden"></div>
-          }
-        >
-          <MapContainerLeafets
-            latitude={coords.latitude}
-            longitude={coords.longitude}
-            radius={radius}
-          />
-        </Suspense>
+        <div className="flex flex-col gap-7">
+          <Suspense
+            fallback={
+              <div className="w-full h-[--tg-viewport-width] bg-slate-300 rounded-full overflow-hidden"></div>
+            }
+          >
+            <MapContainerYandex
+              latitude={coords.latitude}
+              longitude={coords.longitude}
+              radius={radius}
+            />
+          </Suspense>
+          <Suspense
+            fallback={
+              <div className="w-full h-[--tg-viewport-width] bg-slate-300 rounded-full overflow-hidden"></div>
+            }
+          >
+            <MapContainerGoogle
+              latitude={coords.latitude}
+              longitude={coords.longitude}
+              radius={radius}
+            />
+          </Suspense>
+          <Suspense
+            fallback={
+              <div className="w-full h-[--tg-viewport-width] bg-slate-300 rounded-full overflow-hidden"></div>
+            }
+          >
+            <MapContainerLeafets
+              latitude={coords.latitude}
+              longitude={coords.longitude}
+              radius={radius}
+            />
+          </Suspense>
+        </div>
       )}
     </div>
   );

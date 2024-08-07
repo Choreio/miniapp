@@ -1,9 +1,10 @@
 import { type FC } from "react";
 import { useInitData } from "@telegram-apps/sdk-react";
 
-import { Placeholder } from "@telegram-apps/telegram-ui";
+import { Cell, Placeholder, Section } from "@telegram-apps/telegram-ui";
 import { useAppSelector } from "@/store/hooks";
 import { selectUser } from "@/store/slices/userSlice";
+import { SectionHeader } from "@telegram-apps/telegram-ui/dist/components/Blocks/Section/components/SectionHeader/SectionHeader";
 
 export const Profile: FC = () => {
   const initData = useInitData();
@@ -27,16 +28,18 @@ export const Profile: FC = () => {
 
   return (
     <div className="md:container md:mx-auto">
-      <div className="flex flex-col h-full p-4 gap-2">
-        <h1 className="text-6xl text-center">Your profile</h1>
-        <span>User id: {user.id}</span>
-        <span>Username: {user?.username}</span>
-        <span>
-          Name: {user.firstName} {user?.lastName}
-        </span>
-        <span>Photo: {user?.photoUrl}</span>
-        <span>Locale: {user?.languageCode}</span>
-      </div>
+      <Section
+        className="flex flex-col h-full p-4 gap-2"
+        header={<SectionHeader>Your profile</SectionHeader>}
+      >
+        <Cell subhead={"Photo"}>{user?.photoUrl}</Cell>
+        <Cell subhead={"User id"}>{user.id}</Cell>
+        <Cell subhead={"Username"}>{user?.username}</Cell>
+        <Cell subhead={"Full name"}>
+          {user.firstName} {user?.lastName}
+        </Cell>
+        <Cell subhead={"Locale"}>{user?.languageCode}</Cell>
+      </Section>
     </div>
   );
 };
