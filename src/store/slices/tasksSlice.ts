@@ -81,14 +81,17 @@ export const tasksSlice = createSlice({
             const index = state.findIndex(task => task.id === action.payload.id)
             state[index]=editedTask;
         },
-        setStatus: (state, action: PayloadAction<{id:string,status:StatusType}>) => {
+        setStatus: (state, action: PayloadAction<{id:string,status:StatusType, userId: string}>) => {
             const task = state.find(task => task.id === action.payload.id);
-            if(task)
+            if(task){
                 task.status=action.payload.status;
+                task.acceptedBy=action.payload.userId;
+            }
+
         }
     }
 })
-export const {addTask, editTask} = tasksSlice.actions
+export const {addTask, editTask, setStatus} = tasksSlice.actions
 
 export const selectTasks = (state: RootState) => state.tasks
 

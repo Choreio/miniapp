@@ -1,6 +1,7 @@
-import { TaskState } from "@/store/slices/tasksSlice";
+import { useAppSelector } from "@/store/hooks";
+import { setStatus, TaskState } from "@/store/slices/tasksSlice";
+import { selectUser } from "@/store/slices/userSlice";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { initPopup } from "@telegram-apps/sdk";
 import {
   Avatar,
   Cell,
@@ -12,6 +13,7 @@ import { SectionHeader } from "@telegram-apps/telegram-ui/dist/components/Blocks
 import { ModalHeader } from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalHeader/ModalHeader";
 
 import { FC, useState } from "react";
+import { useDispatch } from "react-redux";
 
 /*type TouchState = {
   x_start: number;
@@ -28,144 +30,19 @@ export const TaskCardMini: FC<TaskState> = ({
   customer,
   attachments,
 }) => {
+  const user = useAppSelector(selectUser);
   const [openModal, setOpenModal] = useState(false);
   const [acceptButtonLoading, setAcceptButtonLoading] = useState(false);
   const [dismissButtonLoading, setDismissButtonLoading] = useState(false);
-
-  const popup = initPopup();
-  const openPopup = (title: string, message: string) => {
-    console.log("Called open popup");
-    popup
-      .open({
-        title: title,
-        message: message,
-        buttons: [
-          { id: "confirm-button", type: "ok" },
-          { id: "decline-button", type: "cancel" },
-        ],
-      })
-      .then((buttonId) => {
-        console.log(
-          buttonId === null
-            ? "User did not click any button"
-            : `User clicked a button with ID "${buttonId}"`
-        );
-      });
-    console.log(popup.isOpened); // true
-  };
-  //Remove due TG web app behavior
-  /*const [sidemenu, setSideMenu] = useState(
-    document.getElementById("sidebuttondiv" + id)
-  );
-
-  useEffect(() => {
-    const sidemenu = document.getElementById("sidebuttondiv" + id);
-    setSideMenu(sidemenu || null);
-
-    return () => {
-      //console.log("Height: " + h);
-    };
-  }, [sidemenu]);
-  const [currentSwipe, setCurrentSwipe] = useState({
-    x_start: 0,
-    translateX: 0,
-    direction: "none",
-  } as TouchState);
-  const handleTouchStart = (
-    e: React.TouchEvent<HTMLDivElement | HTMLSpanElement | SVGSVGElement>
-  ) => {
-    e.currentTarget.focus();
-    e.currentTarget.style.transition = "all 0.09s";
-    if (sidemenu) sidemenu.style.transition = "all 0.09s";
-    setCurrentSwipe({
-      ...currentSwipe,
-      x_start: e.targetTouches[0].clientX,
-    });
-    console.log("Touch started: " + currentSwipe.x_start);
-  };
-  const handleTouchMove = (
-    e: React.TouchEvent<HTMLDivElement | HTMLSpanElement>
-  ) => {
-    e.currentTarget.focus();
-    const x = e.targetTouches[0].clientX;
-    const diff = Math.round(x - currentSwipe.x_start);
-    e.currentTarget.style.transform = `translateX(${
-      currentSwipe.translateX + diff
-    }px)`;
-    if (sidemenu)
-      sidemenu.style.transform = `translateX(${
-        currentSwipe.translateX + diff
-      }px)`;
-    if (diff < 0) {
-      setCurrentSwipe({ ...currentSwipe, direction: "left" });
-    }
-    if (diff > 0) {
-      setCurrentSwipe({ ...currentSwipe, direction: "right" });
-    }
-    console.log("Touch moving diffX: " + diff);
-  };
-  const handleTouchEnd = (
-    e: React.TouchEvent<HTMLDivElement | HTMLSpanElement>
-  ) => {
-    e.preventDefault();
-    //get current translate
-    let translateX = Number(getTranslateValues(e.currentTarget)?.x || 0);
-    //help close fast sidemenu
-    if (translateX > -115 && currentSwipe.direction === "right") {
-      translateX = 0;
-      e.currentTarget.style.transform = `translateX(${translateX}px)`;
-      if (sidemenu) sidemenu.style.transform = `translateX(${translateX}px)`;
-      console.log("Assisted closing");
-    }
-
-    //fake or mistake swipe right handle
-    if (translateX < -115 && currentSwipe.direction === "right") {
-      translateX = -128;
-      e.currentTarget.style.transform = `translateX(${translateX}px)`;
-      if (sidemenu) sidemenu.style.transform = `translateX(${translateX}px)`;
-      console.log("Mistaken closing");
-    }
-
-    //Help to open fast sidemenu
-    if (translateX < -15 && currentSwipe.direction === "left") {
-      translateX = -128;
-      e.currentTarget.style.transform = `translateX(${translateX}px)`;
-      if (sidemenu) sidemenu.style.transform = `translateX(${translateX}px)`;
-      console.log("Assisted opening");
-    }
-
-    //fake or mistake swipe left handle
-    if (translateX > -15 && currentSwipe.direction === "left") {
-      translateX = 0;
-      e.currentTarget.style.transform = `translateX(${translateX}px)`;
-      if (sidemenu) sidemenu.style.transform = `translateX(${translateX}px)`;
-      console.log("Mistaken opening");
-    }
-    setCurrentSwipe({
-      ...currentSwipe,
-      translateX: translateX,
-      direction: "none",
-    });
-    console.log("Touch ended");
-  };
-  const handleBlur = (
-    e: React.FocusEvent<HTMLDivElement | HTMLSpanElement>
-  ) => {
-    const translateX = 0;
-    e.currentTarget.style.transform = `translateX(${translateX}px)`;
-    if (sidemenu) sidemenu.style.transform = `translateX(${translateX}px)`;
-    setCurrentSwipe({ ...currentSwipe, translateX: translateX });
-    //console.log("Focus lost");
-  };
-  */
+  const dispatch = useDispatch();
 
   const handleClickAccept = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     console.log("Clicked accept");
     setAcceptButtonLoading(true);
-    openPopup("Warning!", "Are you sure want to accept this task?");
     setTimeout(() => {
       console.log("Do something about 5 secs");
+      dispatch(setStatus({ id: id, status: "active", userId: user.id }));
       handleCloseModal();
       setAcceptButtonLoading(false);
     }, 2000);
@@ -176,6 +53,7 @@ export const TaskCardMini: FC<TaskState> = ({
     setDismissButtonLoading(true);
     await setTimeout(() => {
       console.log("Do something about 5 secs");
+      dispatch(setStatus({ id: id, status: "open", userId: "" }));
       handleCloseModal();
       setDismissButtonLoading(false);
     }, 5000);
