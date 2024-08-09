@@ -5,8 +5,9 @@ export interface UserState {
     
     id: string;
     username?: string;
-    firstName: string;
+    firstName?: string;
     lastName?: string;
+    fullname?: string;
     languageCode?: string;
     photoUrl?: string;
 }
@@ -15,7 +16,8 @@ const initialState: UserState = {
     id:"undefined",
     username:"johndoe1990",
     firstName:"John",
-    lastName:"Doe"
+    lastName:"Doe",
+    fullname:"John Doe"
 }
 
 export const userSlice = createSlice({
@@ -25,8 +27,9 @@ export const userSlice = createSlice({
         setUser: (state, action:PayloadAction<UserState>) => {
             state.id = action.payload.id
             state.username = action.payload?.username
-            state.firstName = action.payload.firstName
-            state.lastName = action.payload?.lastName
+            state.firstName = action.payload.firstName || action.payload.fullname?.split(" ")[0]
+            state.lastName = action.payload?.lastName || action.payload.fullname?.split(" ")[1]
+            state.fullname = action.payload.fullname || action.payload.firstName+" "+action.payload.lastName
             state.languageCode = action.payload?.languageCode
             state.photoUrl = action.payload?.photoUrl
         },
@@ -41,6 +44,12 @@ export const userSlice = createSlice({
                     state.username = action.payload.value
                     break;
                 }
+                case "fullname":{
+                    state.fullname = action.payload.value
+                    state.firstName = action.payload.value.split(" ")[0]
+                    state.lastName = action.payload.value.split(" ")[1]
+                    break;
+                }
                 case "firstname":{
                     state.firstName = action.payload.value
                     break;
@@ -51,6 +60,10 @@ export const userSlice = createSlice({
                 }
                 case "languagecode":{
                     state.languageCode = action.payload.value
+                    break;
+                }
+                case "photourl":{
+                    state.photoUrl = action.payload.value
                     break;
                 }
                 default:{

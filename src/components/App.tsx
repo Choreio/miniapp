@@ -47,6 +47,7 @@ export function App() {
       </Placeholder>
     );
   }
+
   const dispatch = useDispatch();
   const bindUser = (initUser: User | undefined) => {
     if (initUser) {
@@ -61,7 +62,6 @@ export function App() {
       dispatch(setUser(user));
     }
   };
-  bindUser(initData.user);
 
   const bindLP = (initLP: LPState | undefined) => {
     if (initLP) {
@@ -75,7 +75,13 @@ export function App() {
       dispatch(setLP(lp));
     }
   };
-  bindLP(lp);
+
+  useEffect(() => {
+    return initData && bindUser(initData.user);
+  }, []);
+  useEffect(() => {
+    return bindLP(lp);
+  }, [lp]);
 
   useEffect(() => {
     return bindMiniAppCSSVars(miniApp, themeParams);

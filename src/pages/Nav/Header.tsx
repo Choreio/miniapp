@@ -6,17 +6,17 @@ import {
 import logo from "./logo-Photoroom.png";
 
 import { Cog6ToothIcon } from "@heroicons/react/24/solid";
-import { useInitData } from "@telegram-apps/sdk-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Spinner } from "@telegram-apps/telegram-ui";
+import { useAppSelector } from "@/store/hooks";
+import { selectUser } from "@/store/slices/userSlice";
 
 export function Header() {
-  //const wallet = useTonWallet();
-  const initData = useInitData();
   const [tonConnectUI] = useTonConnectUI();
   const navigate = useNavigate();
   const location = useLocation();
+  const user = useAppSelector(selectUser);
 
   const userFriendlyAddress = useTonAddress(); // || "DebguValue";
   const [connecting, setConnecting] = useState(false);
@@ -35,6 +35,7 @@ export function Header() {
       tonConnectUI.onModalStateChange(changeConnecting);
     await tonConnectUI.openModal();
   }
+
   return (
     <header className="inset-x-0 top-0 z-49 pb-2 bg-[--tg-bg-color]">
       <nav aria-label="Global" className="w-full p-2 flex justify-between">
@@ -45,13 +46,8 @@ export function Header() {
           </a>
         </div>
         <div className="relative flex flex-col self-center justify-end items-center pt-4">
-          {initData ? (
-            <span>
-              {initData.user?.firstName + " " + initData.user?.lastName}
-            </span>
-          ) : (
-            <span>Unknown user</span>
-          )}
+          <span>{user?.firstName + " " + user?.lastName}</span>
+
           {userFriendlyAddress ? (
             <div className="w-32 gap-1 rounded-lg text-center">
               <span className="self-center text-[--tg-theme-subtitle-text-color]">
