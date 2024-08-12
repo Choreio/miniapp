@@ -121,7 +121,11 @@ export const Profile: FC = () => {
           )
         }
       >
-        {hasChanges && <div>You have uncommited changes!!!</div>}
+        {hasChanges && (
+          <div className="bg-red-300 text-center transition-transform transform">
+            You have uncommited changes!!!
+          </div>
+        )}
         <div>
           <SectionHeader>Avatar</SectionHeader>
           <Cell

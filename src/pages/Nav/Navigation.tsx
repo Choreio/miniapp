@@ -21,10 +21,6 @@ export function Navigation() {
       title: "Profile",
     },
     {
-      to: "map",
-      title: "Map",
-    },
-    {
       to: "/",
       title: "Home",
     },

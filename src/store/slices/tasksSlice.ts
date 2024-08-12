@@ -14,6 +14,7 @@ export interface TaskState {
     customer: string;
     acceptedBy?: string;
     attachments?: string[];
+    location:string[]|number[];
 }
 
 const initialState: TaskState[] = [
@@ -25,7 +26,8 @@ const initialState: TaskState[] = [
     desc:"There will be 2 bags of garbage",
     reward:"20000 RP",
     attachments:["some photo1", "some photo2"],
-    customer:"Your mom"
+    customer:"Your mom",
+    location:[55.780660, 37.616068]
     },
     {
     id:"12s31sdfsfs231led9hkald",
@@ -35,7 +37,8 @@ const initialState: TaskState[] = [
     desc:"There will be little box about 1kg",
     reward:"26000 RP",
     attachments:["somephoto1", "somephoto2"],
-    customer:"Steven Johnes"
+    customer:"Steven Johnes",
+    location:[55.773790, 37.629883]
     },
     {
     id:"23e9fh23409fasljadhfsk",
@@ -45,17 +48,19 @@ const initialState: TaskState[] = [
     desc:"There will be big shelf",
     reward:"2000000 RP",
     attachments:["some photo1", "somphoto2"],
-    customer:"Willy Hoghs"
+    customer:"Willy Hoghs",
+    location:[55.791939, 37.620963]
     },
     {
-        id:"23e9fh23409fasljadhfsk",
+        id:"23e9fh23409fasskdjfksdjljadhfsk",
         specials:"high price",
         status:"open",
         title:"Get an order from shop and deliver to me",
         desc:"There will be big shelf",
         reward:"2000000 RP",
         attachments:["some photo1", "somphoto2"],
-        customer:"99281932"
+        customer:"99281932",
+        location:[55.794303, 37.618574]
     }
 ]
 
@@ -72,7 +77,8 @@ export const tasksSlice = createSlice({
                 desc:action.payload.desc,
                 reward:action.payload.reward,
                 attachments:action.payload.attachments,
-                customer:action.payload.customer
+                customer:action.payload.customer,
+                location:action.payload.location
                 }
             state.push(newTask)    
         },
@@ -95,7 +101,11 @@ export const {addTask, editTask, setStatus} = tasksSlice.actions
 
 export const selectTasks = (state: RootState) => state.tasks
 
-export const selectTask = (id:string, state: RootState) => {state.tasks.find(task => task.id = id)}
+export const selectOpenTasks = (state: RootState, userId:string) => state.tasks.filter(task => task.acceptedBy !== userId && task.status==="open") 
+export const selectTakenTasks = (state: RootState, userId:string) => state.tasks.filter(task => task.acceptedBy === userId && task.status === "active") 
+export const selectCreatedTasks = (state: RootState, userId:string) => state.tasks.filter(task => task.customer === userId) 
+
+export const selectTaskByID = (state: RootState, taskId:string) => state.tasks.find(task => task.id === taskId)
 
 export default tasksSlice.reducer
 

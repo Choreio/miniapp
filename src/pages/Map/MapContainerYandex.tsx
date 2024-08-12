@@ -1,17 +1,22 @@
-import { Circle, Map, Placemark, YMaps } from "@pbe/react-yandex-maps";
+import { Map, Placemark, YMaps } from "@pbe/react-yandex-maps";
 import { FC } from "react";
 
 import stickman from "./pngwing.png";
+import { TaskState } from "@/store/slices/tasksSlice";
 
 type MapProps = {
   latitude: number;
   longitude: number;
   radius: number;
+  tasks: TaskState[];
+  onBubbleClick: (taskId: string) => void;
 };
 export const MapContainerYandex: FC<MapProps> = ({
   latitude,
   longitude,
-  radius,
+  //radius,
+  tasks,
+  onBubbleClick,
 }) => {
   return (
     <YMaps>
@@ -40,6 +45,20 @@ export const MapContainerYandex: FC<MapProps> = ({
               iconImageOffset: [-6, -12],
             }}
           />
+          {tasks.map((task) => {
+            return (
+              <Placemark
+                onClick={() => onBubbleClick(task.id)}
+                key={task.id}
+                id={"taskNo" + task.id}
+                geometry={task.location}
+                options={{
+                  iconColor: task.status === "active" ? "#00CED1" : "#B22222",
+                }}
+              />
+            );
+          })}
+          {/*
           <Circle
             geometry={[[latitude, longitude], radius]}
             options={{
@@ -48,6 +67,7 @@ export const MapContainerYandex: FC<MapProps> = ({
               strokeColor: "#a3b899",
             }}
           />
+          */}
         </Map>
       </div>
     </YMaps>

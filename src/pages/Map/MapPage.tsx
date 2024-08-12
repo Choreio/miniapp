@@ -1,7 +1,8 @@
+import { TaskState } from "@/store/slices/tasksSlice";
 import { useInitData } from "@telegram-apps/sdk-react";
 import { Placeholder } from "@telegram-apps/telegram-ui";
-import React, { Suspense, useState } from "react";
-import { useGeolocated } from "react-geolocated";
+import React, { FC, Suspense } from "react";
+import { GeolocatedResult } from "react-geolocated";
 
 const MapContainerYandex = React.lazy(() =>
   import("./MapContainerYandex").then(({ MapContainerYandex }) => ({
@@ -21,31 +22,27 @@ const MapContainerGoogle = React.lazy(() =>
   }))
 );
 
-export function MapPage() {
+export const MapPage: FC<{
+  tasks: TaskState[];
+  position: GeolocatedResult;
+  onBubbleClick: (taskId: string) => void;
+}> = ({ tasks, position, onBubbleClick }) => {
   const initData = useInitData();
-
   const {
     coords,
     isGeolocationAvailable,
     isGeolocationEnabled,
     positionError,
     getPosition,
-  } = useGeolocated({
-    positionOptions: {
-      enableHighAccuracy: true,
-    },
-    userDecisionTimeout: Infinity,
-    watchPosition: true,
-    watchLocationPermissionChange: true,
-  });
+  } = position;
+  /*const [radius, setRadius] = useState(500);
   const radiusSettings = [500, 1000, 2000, 3000, 5000];
-
-  const [radius, setRadius] = useState(500);
-
   const handleRadiusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     e.preventDefault();
     setRadius(Number(e.target.value));
-  };
+  };*/
+
+  /*
   function askPermission() {
     navigator.permissions
       .query({ name: "geolocation" })
@@ -64,6 +61,7 @@ export function MapPage() {
         };
       });
   }
+      */
   if (!initData) {
     return (
       <Placeholder
@@ -81,10 +79,9 @@ export function MapPage() {
 
   return (
     <div className="text-center">
-      <div className="text-4xl pt-4">Tasks around you</div>
       <div className="text-slate-400">
-        You are looking for tasks in{" "}
-        <select onChange={handleRadiusChange}>
+        You are looking for tasks in{" 'сколько хочешь' "}
+        {/*<select onChange={handleRadiusChange}>
           {radiusSettings.map((rad) => {
             return (
               <option key={rad} value={rad}>
@@ -92,7 +89,7 @@ export function MapPage() {
               </option>
             );
           })}
-        </select>{" "}
+        </select>{" "}*/}
         meters from you
       </div>
       {!isGeolocationAvailable ? (
@@ -102,7 +99,7 @@ export function MapPage() {
           <span>Geolocation not enabled</span>
           <button
             className="w-32 bg-slate-600 rounded-lg p-1 text-center select-none cursor-pointer hover:bg-slate-700"
-            onClick={askPermission}
+            onClick={getPosition}
           >
             Grant permission
           </button>
@@ -131,7 +128,9 @@ export function MapPage() {
             <MapContainerYandex
               latitude={coords.latitude}
               longitude={coords.longitude}
-              radius={radius}
+              radius={0}
+              tasks={tasks}
+              onBubbleClick={onBubbleClick}
             />
           </Suspense>
           <Suspense
@@ -142,7 +141,7 @@ export function MapPage() {
             <MapContainerGoogle
               latitude={coords.latitude}
               longitude={coords.longitude}
-              radius={radius}
+              radius={0}
             />
           </Suspense>
           <Suspense
@@ -153,11 +152,11 @@ export function MapPage() {
             <MapContainerLeafets
               latitude={coords.latitude}
               longitude={coords.longitude}
-              radius={radius}
+              radius={0}
             />
           </Suspense>
         </div>
       )}
     </div>
   );
-}
+};
