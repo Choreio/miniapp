@@ -40,13 +40,10 @@ export function Header() {
     <header className="inset-x-0 top-0 z-49 pb-2 bg-[--tg-bg-color]">
       <nav aria-label="Global" className="w-full p-2 flex justify-between">
         <div className="h-full inline-flex items-center justify-center p-2">
-          <a href="/" className="-m-1.5 p-1">
-            <span className="sr-only">Chores</span>
-            <img alt="" src={logo} className="h-12 w-12" />
-          </a>
+          <img alt="" src={logo} className="h-12 w-12" />
         </div>
         <div className="relative flex flex-col self-center justify-end items-center pt-4">
-          <span>{user?.firstName + " " + user?.lastName}</span>
+          <span>{user?.fullName}</span>
 
           {userFriendlyAddress ? (
             <div className="w-32 gap-1 rounded-lg text-center">

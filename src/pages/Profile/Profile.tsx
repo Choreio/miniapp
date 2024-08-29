@@ -3,50 +3,188 @@ import { useInitData, useMiniApp } from "@telegram-apps/sdk-react";
 
 import {
   Avatar,
+  Badge,
   Button,
+  Caption,
   Cell,
   FileInput,
   Input,
+  List,
   Placeholder,
   Section,
+  Title,
 } from "@telegram-apps/telegram-ui";
 import { useAppSelector } from "@/store/hooks";
-import { selectUser, setUser, UserState } from "@/store/slices/userSlice";
-import { SectionHeader } from "@telegram-apps/telegram-ui/dist/components/Blocks/Section/components/SectionHeader/SectionHeader";
+import {
+  selectUser,
+  setUser as setUserStore,
+  UserState,
+} from "@/store/slices/userSlice";
 
 import avatarPlaceholderBlack from "./avatar_placeholder_black.png";
 import avatarPlaceholderWhite from "./avatar_placeholder_white.png";
-import { PencilSquareIcon } from "@heroicons/react/24/solid";
 import { useDispatch } from "react-redux";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { isUserEdited, setUserEdited } from "@/store/slices/changesStateSlice";
+import { selectLocation } from "@/store/slices/locationSlice";
+
+const fields = [
+  //Personal
+  {
+    sector: "personal",
+    name: "photoUrl",
+    displayName: "Avatar",
+    editable: true,
+  },
+  {
+    sector: "personal",
+    name: "username",
+    displayName: "Username",
+    editable: true,
+  },
+  { sector: "personal", name: "email", displayName: "Email", editable: true },
+  {
+    sector: "personal",
+    name: "fullName",
+    displayName: "Full name",
+    editable: true,
+  },
+  //System
+  { sector: "system", name: "id", displayName: "Inner ID", editable: false },
+  {
+    sector: "system",
+    name: "tg_id",
+    displayName: "Telegram ID",
+    editable: false,
+  },
+  //Others
+  {
+    sector: "others",
+    name: "languageCode",
+    displayName: "Locale",
+    editable: false,
+  },
+  { sector: "others", name: "role", displayName: "User Role", editable: false },
+] as const;
+
+const geolocationFields = [
+  //Geolocation
+  {
+    sector: "geolocation",
+    name: "available",
+    displayName: "Geoposition enabled",
+    editable: false,
+  },
+  {
+    sector: "geolocation",
+    name: "latitude",
+    displayName: "Latitude",
+    editable: false,
+  },
+  {
+    sector: "geolocation",
+    name: "longitude",
+    displayName: "Longitude",
+    editable: false,
+  },
+  {
+    sector: "geolocation",
+    name: "formattedAdress",
+    displayName: "FormattedAddress",
+    editable: false,
+  },
+  {
+    sector: "geolocation",
+    name: "country",
+    displayName: "Country name",
+    editable: false,
+  },
+  {
+    sector: "geolocation",
+    name: "city",
+    displayName: "City name",
+    editable: false,
+  },
+  {
+    sector: "geolocation",
+    name: "street",
+    displayName: "Street name",
+    editable: false,
+  },
+  {
+    sector: "geolocation",
+    name: "house",
+    displayName: "House No",
+    editable: false,
+  },
+] as const;
 
 export const Profile: FC = () => {
-  const miniApp = useMiniApp();
   const initData = useInitData();
 
   const dispatch = useDispatch();
+
+  const miniApp = useMiniApp();
+  const [editing, setEditing] = useState(useAppSelector(isUserEdited));
+  const [hasChanges, setHasChanges] = useState(useAppSelector(isUserEdited));
+
   const userStore = useAppSelector(selectUser);
-
-  const [userEdited, setUserEdited] = useState({
-    ...(userStore as UserState),
+  const userEdited = JSON.parse(sessionStorage.getItem("saved-user") || "{}");
+  const [user, setUser] = useState<UserState | undefined>(
+    hasChanges ? userEdited : userStore
+  );
+  const geolocation = useAppSelector(selectLocation);
+  const [geolocParsed, setGeolocParsed] = useState({
+    available: geolocation.available,
+    ...geolocation.latLong,
+    ...geolocation.address,
   });
-
   useEffect(() => {
-    setUserEdited({
-      ...(userStore as UserState),
+    setGeolocParsed({
+      available: geolocation.available,
+      ...geolocation.latLong,
+      ...geolocation.address,
     });
-    console.log("Sync user");
-  }, [userStore]);
+  }, [geolocation]);
 
+  const [editedFields, setEditedFields] = useState<string[]>([]);
+
+  //Updating changes state
   useEffect(() => {
-    if (JSON.stringify(userStore) !== JSON.stringify(userEdited))
-      setHasChanges(true);
-    else setHasChanges(false);
-  }, [userEdited]);
+    dispatch(setUserEdited(hasChanges));
+  }, [hasChanges, dispatch]);
 
-  const [editing, setEditing] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  //Check if there are any changes after editing fields
+  useEffect(() => {
+    if (user)
+      if (JSON.stringify(userStore) !== JSON.stringify(user)) {
+        //Update saved edited user
+        sessionStorage.setItem("saved-user", JSON.stringify(user));
+        //Check what fields is changed
+        setEditedFields(
+          fields.map((field) => {
+            if (user[field.name] !== userStore[field.name]) return field.name;
+            else return "";
+          })
+        );
+        setHasChanges(true);
+      } else {
+        setHasChanges(false);
+        sessionStorage.removeItem("saved-user");
+        setEditedFields([]);
+      }
+  }, [user, userStore]);
 
-  const handleEditMode = (e: React.MouseEvent<SVGSVGElement>) => {
+  //Update main user object after we dispatch our changes
+  useEffect(() => {
+    if (!hasChanges) {
+      console.log("Sync user");
+      setUser(userStore);
+    }
+  }, [userStore, hasChanges]);
+
+  //Toggle edit mode
+  const handleEditMode = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     console.log("Edit mode handler");
     setEditing(true);
@@ -54,29 +192,37 @@ export const Profile: FC = () => {
       setEditing(false);
     }
   };
+  //Hadling image input
   const handleChangeAvatar = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    console.log("Avatar change");
-    const files = e.currentTarget.files;
-    if (files) {
-      userEdited.photoUrl = URL.createObjectURL(files[0]);
+    if (user) {
+      e.preventDefault();
+      console.log("Avatar change");
+      const files = e.currentTarget.files;
+      if (files) {
+        setUser({ ...user, photoUrl: URL.createObjectURL(files[0]) });
+      }
     }
   };
-
+  //Handle confirm button click
   const handleConfirmChange = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    console.log("Changes saved");
-    dispatch(setUser(userEdited));
-    setEditing(false);
+    if (user) {
+      e.preventDefault();
+      console.log("Changes saved");
+      dispatch(setUserStore(user));
+      setEditing(false);
+      setHasChanges(false);
+    }
   };
+  //Handle cancel button click
   const handleCancelChange = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     console.log("Changes canceled");
-    setUserEdited({
-      ...(userStore as UserState),
-    });
+    setUser(userStore);
     setEditing(false);
+    setHasChanges(false);
   };
+
+  const [multiline, setMultiline] = useState(false);
 
   if (!initData) {
     return (
@@ -92,114 +238,206 @@ export const Profile: FC = () => {
       </Placeholder>
     );
   }
-
+  if (!user) {
+    return <ErrorBoundary>Something went wrong with user</ErrorBoundary>;
+  }
   return (
-    <div className="md:container md:mx-auto">
-      <Section
-        className="flex flex-col h-full pt-4 gap-2"
-        header={
-          <SectionHeader large={true}>
-            <span className="flex gap-2">
-              <div>Your profile</div>
-              <PencilSquareIcon
-                className="w-6 hover:opacity-90"
-                onClick={handleEditMode}
-              ></PencilSquareIcon>
-            </span>
-          </SectionHeader>
-        }
-        footer={
-          editing && (
-            <>
-              <Button className="bg-green-400" onClick={handleConfirmChange}>
-                Confirm
-              </Button>
-              <Button className="bg-red-400" onClick={handleCancelChange}>
-                Cancel
-              </Button>
-            </>
-          )
-        }
-      >
-        {hasChanges && (
-          <div className="bg-red-300 text-center transition-transform transform">
-            You have uncommited changes!!!
+    <div className="md:container md:mx-auto pt-2">
+      {hasChanges && (
+        <div className="bg-yellow-400 text-center rounded-lg mb-1">
+          You have uncommited changes!!!
+        </div>
+      )}
+      <div className="p-2 flex align-middle items-center justify-between w-full">
+        <Title>My profile</Title>
+        <Button mode="plain" onClick={handleEditMode}>
+          Edit
+        </Button>
+      </div>
+      <List className="flex flex-col h-full gap-8">
+        <Section header="Personal Info">
+          {fields
+            .filter((field) => field.sector === "personal")
+            .map((field) => {
+              return (
+                <div key={field.name}>
+                  <Caption
+                    level="1"
+                    weight="2"
+                    className="p-6 text-[--tg-theme-hint-color]"
+                  >
+                    {field.displayName}
+                  </Caption>
+                  {field.name === "photoUrl" && (
+                    <Cell
+                      after={
+                        field.editable &&
+                        editing && (
+                          <FileInput
+                            id="input_file"
+                            onChange={handleChangeAvatar}
+                            accept="image/png, image/jpeg"
+                          ></FileInput>
+                        )
+                      }
+                    >
+                      {editedFields.includes(field.name) && (
+                        <Badge
+                          type="number"
+                          mode="critical"
+                          large
+                          className="absolute left-2 top-2 z-10"
+                        >
+                          Edited
+                        </Badge>
+                      )}
+                      <Avatar
+                        size={96}
+                        src={
+                          user.photoUrl
+                            ? user.photoUrl
+                            : miniApp.isDark
+                            ? avatarPlaceholderWhite
+                            : avatarPlaceholderBlack
+                        }
+                      ></Avatar>
+                    </Cell>
+                  )}
+                  {field.name !== "photoUrl" && (
+                    <>
+                      {editing && field.editable ? (
+                        <Input
+                          readOnly={!(editing && field.editable)}
+                          status={
+                            editedFields.includes(field.name)
+                              ? "error"
+                              : "default"
+                          }
+                          inputMode="text"
+                          placeholder={field.displayName}
+                          value={user[field.name]}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                            switch (field.name) {
+                              case "username":
+                                setUser({
+                                  ...user,
+                                  username: e.currentTarget.value,
+                                });
+                                break;
+                              case "email":
+                                setUser({
+                                  ...user,
+                                  email: e.currentTarget.value,
+                                });
+                                break;
+                              case "fullName":
+                                setUser({
+                                  ...user,
+                                  fullName: e.currentTarget.value,
+                                });
+                                break;
+                              default:
+                                break;
+                            }
+                          }}
+                        />
+                      ) : (
+                        <Cell
+                          multiline={multiline}
+                          onClick={() => setMultiline(!multiline)}
+                        >
+                          {user[field.name]}
+                        </Cell>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+        </Section>
+        <Section header="System Info">
+          {fields
+            .filter((field) => field.sector === "system")
+            .map((field) => {
+              return (
+                <div key={field.name}>
+                  <Caption
+                    level="1"
+                    weight="2"
+                    className="pl-6 text-[--tg-theme-hint-color]"
+                  >
+                    {field.displayName}
+                  </Caption>
+                  <Cell
+                    multiline={multiline}
+                    onClick={() => setMultiline(!multiline)}
+                  >
+                    {user[field.name]}
+                  </Cell>
+                </div>
+              );
+            })}
+        </Section>
+        <Section header="Other Info">
+          {fields
+            .filter((field) => field.sector === "others")
+            .map((field) => {
+              return (
+                <div key={field.name}>
+                  <Caption
+                    level="1"
+                    weight="2"
+                    className="p-6 text-[--tg-theme-hint-color]"
+                  >
+                    {field.displayName}
+                  </Caption>
+                  <Cell
+                    multiline={multiline}
+                    onClick={() => setMultiline(!multiline)}
+                  >
+                    {user[field.name]}
+                  </Cell>
+                </div>
+              );
+            })}
+        </Section>
+        <Section header="Geolocation Info">
+          {geolocationFields.map((field) => {
+            return (
+              <div key={field.name}>
+                <Caption
+                  level="1"
+                  weight="2"
+                  className="p-6 text-[--tg-theme-hint-color]"
+                >
+                  {field.displayName}
+                </Caption>
+                <Cell
+                  multiline={multiline}
+                  onClick={() => setMultiline(!multiline)}
+                >
+                  {geolocParsed[field.name]?.toString()}
+                </Cell>
+              </div>
+            );
+          })}
+        </Section>
+      </List>
+      {editing && (
+        <div className="sticky bottom-1">
+          <div className="flex flex-row justify-center items-center">
+            <Button
+              className="bg-green-400 w-full"
+              onClick={handleConfirmChange}
+            >
+              Confirm
+            </Button>
+            <Button className="bg-red-400 w-full" onClick={handleCancelChange}>
+              Cancel
+            </Button>
           </div>
-        )}
-        <div>
-          <SectionHeader>Avatar</SectionHeader>
-          <Cell
-            after={
-              editing && (
-                <FileInput
-                  id="input_file"
-                  onChange={handleChangeAvatar}
-                  accept="image/png, image/jpeg"
-                ></FileInput>
-              )
-            }
-          >
-            <Avatar
-              size={96}
-              src={
-                userEdited.photoUrl && userEdited.photoUrl.length > 0
-                  ? userEdited.photoUrl
-                  : miniApp.isDark
-                  ? avatarPlaceholderWhite
-                  : avatarPlaceholderBlack
-              }
-            ></Avatar>
-          </Cell>
         </div>
-        <div>
-          <SectionHeader>User id</SectionHeader>
-          <Cell>{userEdited.id}</Cell>
-        </div>
-        <div>
-          <SectionHeader>Username</SectionHeader>
-          {editing ? (
-            <Input
-              className="w-full m-auto"
-              placeholder="Username"
-              value={userEdited.username}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setUserEdited({
-                  ...userEdited,
-                  username: e.currentTarget.value,
-                });
-              }}
-            ></Input>
-          ) : (
-            <Cell>
-              <span>{userEdited?.username}</span>
-            </Cell>
-          )}
-        </div>
-        <div>
-          <SectionHeader>Full name</SectionHeader>
-          {editing ? (
-            <Input
-              className="w-full m-auto"
-              placeholder="Full name"
-              value={userEdited.fullname}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                setUserEdited({
-                  ...userEdited,
-                  fullname: e.currentTarget.value,
-                  firstName: e.currentTarget.value.split(" ")[0],
-                  lastName: e.currentTarget.value.split(" ")[1],
-                });
-              }}
-            ></Input>
-          ) : (
-            <Cell>{userEdited.fullname}</Cell>
-          )}
-        </div>
-        <div>
-          <SectionHeader>Locale</SectionHeader>
-          <Cell>{userEdited?.languageCode}</Cell>
-        </div>
-      </Section>
+      )}
     </div>
   );
 };

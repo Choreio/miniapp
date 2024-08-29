@@ -1,23 +1,26 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import type { RootState } from '../store'
 
-export interface UserState {
+export type UserState = {
     
-    id: string;
-    username?: string;
-    firstName?: string;
-    lastName?: string;
-    fullname?: string;
-    languageCode?: string;
-    photoUrl?: string;
+    'id': string;
+    'tg_id'?: string;
+    'username'?: string;
+    'email'?:string;
+    'photoUrl'?: string;
+    'fullName'?: string;
+
+    'languageCode'?: string;
+    'role': string;
 }
 
 const initialState: UserState = {
     id:"undefined",
+    tg_id:"undefined",
     username:"johndoe1990",
-    firstName:"John",
-    lastName:"Doe",
-    fullname:"John Doe"
+    fullName:"John Doe",
+    email:"johndoe1990@test.com",
+    role:"user"
 }
 
 export const userSlice = createSlice({
@@ -26,40 +29,26 @@ export const userSlice = createSlice({
     reducers:{
         setUser: (state, action:PayloadAction<UserState>) => {
             state.id = action.payload.id
+            state.tg_id = action.payload.tg_id
             state.username = action.payload?.username
-            state.firstName = action.payload.firstName || action.payload.fullname?.split(" ")[0]
-            state.lastName = action.payload?.lastName || action.payload.fullname?.split(" ")[1]
-            state.fullname = action.payload.fullname || action.payload.firstName+" "+action.payload.lastName
+            state.fullName = action.payload.fullName
             state.languageCode = action.payload?.languageCode
             state.photoUrl = action.payload?.photoUrl
+            state.role = action.payload?.role || "user"
         },
         setField: (state, action:PayloadAction<{field:string, value:string}>) => {
             const field = action.payload.field;
             switch(field.toLowerCase()){
-                case "id":{
-                    state.id = action.payload.value
-                    break;
-                }
                 case "username":{
                     state.username = action.payload.value
                     break;
                 }
+                case "email":{
+                    state.email = action.payload.value
+                    break;
+                }
                 case "fullname":{
-                    state.fullname = action.payload.value
-                    state.firstName = action.payload.value.split(" ")[0]
-                    state.lastName = action.payload.value.split(" ")[1]
-                    break;
-                }
-                case "firstname":{
-                    state.firstName = action.payload.value
-                    break;
-                }
-                case "lastname":{
-                    state.lastName = action.payload.value
-                    break;
-                }
-                case "languagecode":{
-                    state.languageCode = action.payload.value
+                    state.fullName = action.payload.value
                     break;
                 }
                 case "photourl":{

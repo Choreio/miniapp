@@ -1,94 +1,134 @@
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useAppSelector } from "@/store/hooks";
-import { selectTaskByID, setStatus } from "@/store/slices/tasksSlice";
-import { selectUser } from "@/store/slices/userSlice";
-import { Cell, Button, Section } from "@telegram-apps/telegram-ui";
-import { SectionHeader } from "@telegram-apps/telegram-ui/dist/components/Blocks/Section/components/SectionHeader/SectionHeader";
+import { TaskStateType } from "@/store/slices/tasksSlice";
+import { Cell, Button, Title, Avatar, Badge } from "@telegram-apps/telegram-ui";
 
-import { FC, useState } from "react";
-import { useDispatch } from "react-redux";
+import { FC, useEffect, useState } from "react";
+import { isTaskEdited } from "@/store/slices/changesStateSlice";
+import { selectLocation } from "@/store/slices/locationSlice";
+import { calcDistance } from "@/methods/calcDistance";
+import { TaskView } from "./TaskView";
+import { TaskEdit } from "./TaskEdit";
+import { TaskCreate } from "./TaskCreate";
+import { PseudoTGModal } from "./PseudoTGModal";
+
+export const TaskMiniCard: FC<{
+  task: TaskStateType;
+  mode: "view" | "edit";
+}> = ({ task, mode }) => {
+  //Modal handlers
+  const geolocation = useAppSelector(selectLocation);
+
+  const edited = useAppSelector((store) => isTaskEdited(store, task.id));
+  const [openModal, setOpenModal] = useState(false);
+  const [hidingModal, setHidingModal] = useState(false);
+  const handleOpenModal = () => {
+    setOpenModal(true);
+    console.log("Modal opened");
+  };
+  const handleCloseModal = () => {
+    setHidingModal(true);
+  };
+
+  const [distance, setDistance] = useState<number>();
+
+  useEffect(() => {
+    setDistance(calcDistance(task.location?.latLong, geolocation.latLong));
+  }, [geolocation, task]);
+
+  return (
+    <>
+      <Cell
+        before={<Avatar>CS</Avatar>}
+        id={task.id}
+        className="w-full select-none"
+        multiline={false}
+        description={task.desc}
+        after={<span>{task.reward}</span>}
+        titleBadge={
+          edited ? (
+            <Badge className="bg-yellow-600" mode="critical" type="number">
+              !
+            </Badge>
+          ) : (
+            <></>
+          )
+        }
+        subhead={distance + " km"}
+        onClick={handleOpenModal}
+      >
+        {task.title}
+      </Cell>
+      {openModal && (
+        <PseudoTGModal
+          openModal={openModal}
+          setOpenModal={setOpenModal}
+          closeModal={handleCloseModal}
+          hidingModal={hidingModal}
+          setHidingModal={setHidingModal}
+        >
+          <TaskCard
+            taskId={task.id}
+            closeModal={handleCloseModal}
+            mode={mode}
+          ></TaskCard>
+        </PseudoTGModal>
+      )}
+    </>
+  );
+};
 
 export const TaskCard: FC<{
-  id: string | undefined;
+  taskId?: string;
+  mode: "view" | "edit" | "create";
   closeModal: () => void;
-}> = ({ id, closeModal }) => {
-  if (!id) {
-    return <ErrorBoundary>ERROR</ErrorBoundary>;
-  }
-  const user = useAppSelector(selectUser);
-  const task = useAppSelector((state) => selectTaskByID(state, id));
-  const [acceptButtonLoading, setAcceptButtonLoading] = useState(false);
-  const [dismissButtonLoading, setDismissButtonLoading] = useState(false);
-  const dispatch = useDispatch();
+}> = ({ taskId = "-1", closeModal, mode }) => {
+  const [editingMode, setEditingMode] = useState(
+    useAppSelector((state) => isTaskEdited(state, taskId))
+  );
 
-  if (!task) {
-    return <ErrorBoundary>ERROR</ErrorBoundary>;
-  }
+  const isEdited = useAppSelector((state) => isTaskEdited(state, taskId));
+  const [jiggle, setJiggle] = useState(false);
 
-  const handleClickAccept = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    console.log("Clicked accept");
-    setAcceptButtonLoading(true);
-    setTimeout(() => {
-      console.log("Do something after 2 secs");
-      dispatch(setStatus({ id: id, status: "active", userId: user.id }));
-      setAcceptButtonLoading(false);
-      closeModal();
-    }, 2000);
+  const handleEditMode = () => {
+    if (isEdited) setJiggle(true);
+    if (!isEdited) setEditingMode((edit) => !edit);
   };
-  const handleClickDismiss = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    console.log("Clicked dismiss");
-    setDismissButtonLoading(true);
-    await setTimeout(() => {
-      console.log("Do something after 5 secs");
-      dispatch(setStatus({ id: id, status: "open", userId: "" }));
-      setDismissButtonLoading(false);
-      closeModal();
-    }, 5000);
-  };
+
+  if (!taskId) {
+    return <ErrorBoundary>No passed task id</ErrorBoundary>;
+  }
   return (
     <div className="flex flex-col gap-1">
-      <Section
-        className="flex flex-col gap-2 h-full"
-        header={<SectionHeader>Details</SectionHeader>}
-        footer={
-          <div className="w-full flex justify-around">
-            {task.status === "open" && (
-              <Button
-                className="bg-green-600 w-2/6"
-                onClick={handleClickAccept}
-                loading={acceptButtonLoading}
-              >
-                Accept
-              </Button>
-            )}
-            {task.status === "active" && (
-              <Button
-                className="bg-red-600 w-2/6"
-                onClick={handleClickDismiss}
-                loading={dismissButtonLoading}
-              >
-                Decline
-              </Button>
-            )}
-          </div>
+      <div className="p-2 flex align-middle items-center justify-between w-full">
+        <Title className="text-center">Task details</Title>
+        {
+          //If user can edit task
+          mode === "edit" && (
+            <Button
+              mode="plain"
+              onClick={handleEditMode}
+              className={jiggle ? "animate-jiggle text-red-400" : ""}
+              onAnimationEnd={() => {
+                setJiggle(false);
+              }}
+            >
+              Edit
+            </Button>
+          )
         }
-      >
-        <Cell subhead={"Title"}>{task.title}</Cell>
-        <Cell subhead={"Description"}>{task.desc}</Cell>
-        <Cell subhead={"Reward"}>
-          <span>{task.reward}</span>
-        </Cell>
-        {task.attachments && (
-          <Cell subhead={"Attachments"}>
-            <span>{task.attachments}</span>
-          </Cell>
-        )}
-        <Cell subhead={"Customer"}>
-          <span>{task.customer}</span>
-        </Cell>
-      </Section>
+      </div>
+      {mode !== "create" && !editingMode && (
+        <div>
+          <TaskView taskId={taskId} closeModal={closeModal} />
+        </div>
+      )}
+      {mode !== "create" && editingMode && (
+        <div>
+          <TaskEdit taskId={taskId} endEditing={() => setEditingMode(false)} />
+        </div>
+      )}
+      {mode === "create" && <TaskCreate closeModal={closeModal} />}
     </div>
   );
 };

@@ -23,6 +23,12 @@ const TasksTab = React.lazy(() =>
   }))
 );
 
+const MyTasksTab = React.lazy(() =>
+  import("@/pages/Tasks/MyTasksTab").then(({ MyTasksTab }) => ({
+    default: MyTasksTab,
+  }))
+);
+
 const Settings = React.lazy(() =>
   import("@/pages/Settings/Settings").then(({ Settings }) => ({
     default: Settings,
@@ -39,6 +45,11 @@ export const routes: Route[] = [
     path: "tasks",
     Component: TasksTab,
     title: "Tasks",
+  },
+  {
+    path: "mytasks",
+    Component: MyTasksTab,
+    title: "My Tasks",
   },
   { path: "settings", Component: Settings, title: "Settings" },
   { path: "chat", Component: Chat, title: "Chat" },

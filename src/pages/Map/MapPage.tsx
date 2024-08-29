@@ -1,8 +1,10 @@
-import { TaskState } from "@/store/slices/tasksSlice";
-import { useInitData } from "@telegram-apps/sdk-react";
-import { Placeholder } from "@telegram-apps/telegram-ui";
-import React, { FC, Suspense } from "react";
-import { GeolocatedResult } from "react-geolocated";
+import { GeoLocationStateType } from "@/store/slices/locationSlice";
+import { TaskStateType } from "@/store/slices/tasksSlice";
+import { Modal } from "@telegram-apps/telegram-ui";
+import React, { FC, Suspense, useState } from "react";
+import { GeolocationRequest } from "./GeolocationRequest";
+import { TaskCard } from "../Tasks/TaskCard";
+import { ModalHeader } from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalHeader/ModalHeader";
 
 const MapContainerYandex = React.lazy(() =>
   import("./MapContainerYandex").then(({ MapContainerYandex }) => ({
@@ -10,115 +12,37 @@ const MapContainerYandex = React.lazy(() =>
   }))
 );
 
-const MapContainerLeafets = React.lazy(() =>
-  import("./MapContainerLeafets").then(({ MapContainerLeafets }) => ({
-    default: MapContainerLeafets,
-  }))
-);
-
-const MapContainerGoogle = React.lazy(() =>
-  import("./MapContainerGoogle").then(({ MapContainerGoogle }) => ({
-    default: MapContainerGoogle,
-  }))
-);
-
 export const MapPage: FC<{
-  tasks: TaskState[];
-  position: GeolocatedResult;
-  onBubbleClick: (taskId: string) => void;
-}> = ({ tasks, position, onBubbleClick }) => {
-  const initData = useInitData();
-  const {
-    coords,
-    isGeolocationAvailable,
-    isGeolocationEnabled,
-    positionError,
-    getPosition,
-  } = position;
-  /*const [radius, setRadius] = useState(500);
-  const radiusSettings = [500, 1000, 2000, 3000, 5000];
-  const handleRadiusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    e.preventDefault();
-    setRadius(Number(e.target.value));
-  };*/
+  parent: "MyTasks" | "Tasks";
+  tasks: TaskStateType[];
+  position: GeoLocationStateType;
+  radius?: number;
+}> = ({ parent, tasks, position, radius = 0 }) => {
+  const { available, latLong, address } = position;
 
-  /*
-  function askPermission() {
-    navigator.permissions
-      .query({ name: "geolocation" })
-      .then(function (result) {
-        if (result.state == "granted") {
-          console.log(result.state);
-          getPosition();
-        } else if (result.state == "prompt") {
-          console.log(result.state);
-          getPosition();
-        } else if (result.state == "denied") {
-          console.log(result.state);
-        }
-        result.onchange = function () {
-          console.log(result.state);
-        };
-      });
-  }
-      */
-  if (!initData) {
-    return (
-      <Placeholder
-        header="Oops"
-        description="Application was launched with missing init data"
-      >
-        <img
-          alt="Telegram sticker"
-          src="https://xelene.me/telegram.gif"
-          style={{ display: "block", width: "144px", height: "144px" }}
-        />
-      </Placeholder>
-    );
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<TaskStateType>();
+
+  const handleOpenModal = () => {
+    setOpenModal(true);
+  };
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
+
+  if (!available) {
+    return <GeolocationRequest />;
   }
 
   return (
     <div className="text-center">
-      <div className="text-slate-400">
-        You are looking for tasks in{" 'сколько хочешь' "}
-        {/*<select onChange={handleRadiusChange}>
-          {radiusSettings.map((rad) => {
-            return (
-              <option key={rad} value={rad}>
-                {rad}
-              </option>
-            );
-          })}
-        </select>{" "}*/}
-        meters from you
+      <div>Current address: {address?.formattedAdress}</div>
+      <div className="flex-col hidden">
+        <span>Geolocation is available</span>
+        <span>Latitude: {latLong?.latitude}</span>
+        <span>Longitude: {latLong?.longitude}</span>
       </div>
-      {!isGeolocationAvailable ? (
-        <div>Your browser doesnt support geolocation</div>
-      ) : !isGeolocationEnabled ? (
-        <div className="flex flex-col gap-2 items-center">
-          <span>Geolocation not enabled</span>
-          <button
-            className="w-32 bg-slate-600 rounded-lg p-1 text-center select-none cursor-pointer hover:bg-slate-700"
-            onClick={getPosition}
-          >
-            Grant permission
-          </button>
-        </div>
-      ) : positionError ? (
-        <div>positionError</div>
-      ) : (
-        <div className="flex-col hidden">
-          <span>Geolocation is available</span>
-          <span>Accuracy: {coords?.accuracy}</span>
-          <span>Altitude: {coords?.altitude}</span>
-          <span>Altitude accuracy: {coords?.altitudeAccuracy}</span>
-          <span>Heading: {coords?.heading}</span>
-          <span>Latitude: {coords?.latitude}</span>
-          <span>Longitude: {coords?.longitude}</span>
-          <span>Speed: {coords?.speed}</span>
-        </div>
-      )}
-      {coords && (
+      {latLong && (
         <div className="flex flex-col gap-7">
           <Suspense
             fallback={
@@ -126,35 +50,39 @@ export const MapPage: FC<{
             }
           >
             <MapContainerYandex
-              latitude={coords.latitude}
-              longitude={coords.longitude}
-              radius={0}
-              tasks={tasks}
-              onBubbleClick={onBubbleClick}
+              available={available}
+              type="self"
+              className="p-2 w-full h-[--tg-viewport-width] overflow-hidden z-0"
+              center={{
+                latitude: Number(latLong.latitude),
+                longitude: Number(latLong.longitude),
+              }}
+              points={tasks.map((task) => {
+                return {
+                  taskId: task.id,
+                  latitude: Number(task.location.latLong?.latitude),
+                  longitude: Number(task.location.latLong?.longitude),
+                  onBubbleClick: () => {
+                    handleOpenModal();
+                    setSelectedTask(task);
+                  },
+                };
+              })}
+              radius={radius}
             />
           </Suspense>
-          <Suspense
-            fallback={
-              <div className="w-full h-[--tg-viewport-width] bg-slate-300 rounded-full overflow-hidden"></div>
-            }
+          <Modal
+            header={<ModalHeader />}
+            className="h-2/3"
+            open={openModal}
+            onOpenChange={(open) => setOpenModal(open)}
           >
-            <MapContainerGoogle
-              latitude={coords.latitude}
-              longitude={coords.longitude}
-              radius={0}
+            <TaskCard
+              taskId={selectedTask?.id}
+              mode={parent === "Tasks" ? "view" : "edit"}
+              closeModal={handleCloseModal}
             />
-          </Suspense>
-          <Suspense
-            fallback={
-              <div className="w-full h-[--tg-viewport-width] bg-slate-300 rounded-full overflow-hidden"></div>
-            }
-          >
-            <MapContainerLeafets
-              latitude={coords.latitude}
-              longitude={coords.longitude}
-              radius={0}
-            />
-          </Suspense>
+          </Modal>
         </div>
       )}
     </div>
