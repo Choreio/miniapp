@@ -1,34 +1,18 @@
-import { GeoLocationStateType } from "@/store/slices/locationSlice";
+import { selectLocation } from "@/store/slices/locationSlice";
 import { TaskStateType } from "@/store/slices/tasksSlice";
-import { Modal } from "@telegram-apps/telegram-ui";
-import React, { FC, Suspense, useState } from "react";
-import { GeolocationRequest } from "./GeolocationRequest";
-import { TaskCard } from "../Tasks/TaskCard";
-import { ModalHeader } from "@telegram-apps/telegram-ui/dist/components/Overlays/Modal/components/ModalHeader/ModalHeader";
+import { FC, Suspense } from "react";
+import { GeolocationRequest } from "../Map/GeolocationRequest";
+import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "@/store/hooks";
 
-const MapContainerYandex = React.lazy(() =>
-  import("./MapContainerYandex").then(({ MapContainerYandex }) => ({
-    default: MapContainerYandex,
-  }))
-);
+import { MapContainerYandex } from "@/pages/Map/MapContainerYandex";
 
-export const MapPage: FC<{
-  parent: "MyTasks" | "Tasks";
+export const TasksMap: FC<{
   tasks: TaskStateType[];
-  position: GeoLocationStateType;
   radius?: number;
-}> = ({ parent, tasks, position, radius = 0 }) => {
-  const { available, latLong, address } = position;
-
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<TaskStateType>();
-
-  const handleOpenModal = () => {
-    setOpenModal(true);
-  };
-  const handleCloseModal = () => {
-    setOpenModal(false);
-  };
+}> = ({ tasks, radius = 0 }) => {
+  const { available, latLong, address } = useAppSelector(selectLocation);
+  const navigate = useNavigate();
 
   if (!available) {
     return <GeolocationRequest />;
@@ -63,26 +47,13 @@ export const MapPage: FC<{
                   latitude: Number(task.location.latLong?.latitude),
                   longitude: Number(task.location.latLong?.longitude),
                   onBubbleClick: () => {
-                    handleOpenModal();
-                    setSelectedTask(task);
+                    navigate("tasks/task/" + task.id);
                   },
                 };
               })}
               radius={radius}
             />
           </Suspense>
-          <Modal
-            header={<ModalHeader />}
-            className="h-2/3"
-            open={openModal}
-            onOpenChange={(open) => setOpenModal(open)}
-          >
-            <TaskCard
-              taskId={selectedTask?.id}
-              mode={parent === "Tasks" ? "view" : "edit"}
-              closeModal={handleCloseModal}
-            />
-          </Modal>
         </div>
       )}
     </div>

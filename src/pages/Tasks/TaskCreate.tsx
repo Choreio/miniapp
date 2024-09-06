@@ -1,5 +1,10 @@
 import { useAppSelector } from "@/store/hooks";
-import { addTask, TaskStateType } from "@/store/slices/tasksSlice";
+import {
+  addTask,
+  CurrencyType,
+  TaskStateType,
+  UserType,
+} from "@/store/slices/tasksSlice";
 import { selectUser } from "@/store/slices/userSlice";
 import {
   Button,
@@ -10,7 +15,9 @@ import {
   InlineButtons,
   Input,
   List,
+  Section,
   Text,
+  Title,
 } from "@telegram-apps/telegram-ui";
 import React, {
   ChangeEvent,
@@ -31,37 +38,38 @@ import { InlineButtonsItem } from "@telegram-apps/telegram-ui/dist/components/Bl
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import Lightbox from "yet-another-react-lightbox";
 import { Zoom } from "yet-another-react-lightbox/plugins";
+import { useNavigate } from "react-router-dom";
+import { SectionHeader } from "@telegram-apps/telegram-ui/dist/components/Blocks/Section/components/SectionHeader/SectionHeader";
+import { MapContainerYandex } from "@/pages/Map/MapContainerYandex";
 
-const MapContainerYandex = React.lazy(() =>
-  import("@/pages/Map/MapContainerYandex").then(({ MapContainerYandex }) => ({
-    default: MapContainerYandex,
-  }))
-);
+export const TaskCreate: FC = () => {
+  const navigate = useNavigate();
 
-type CurrencyType = "TON" | "USDT" | "BTC" | undefined;
-
-export const TaskCreate: FC<{
-  closeModal: () => void;
-}> = ({ closeModal }) => {
   const user = useAppSelector(selectUser);
   const dispatch = useDispatch();
 
   const [formNotFilledAlert, setFormNotFilledAlert] = useState(false);
-  //Task fields
 
+  //Task fields
   const [title, setTitle] = useState<string>("");
 
   const [desc, setDesc] = useState<string>("");
 
-  const [cost, setCost] = useState<string>("");
+  const [cost, setCost] = useState<number>(0);
 
   const [currency, setCurrency] = useState<CurrencyType>();
+
   const [attachments, setAttachments] = useState<string[]>([]);
 
   const [location, setLocation] = useState<GeoLocationStateType>({
     available: false,
   });
-  const customerId = useMemo(() => user.id, [user]);
+  const customer = useMemo(() => {
+    return {
+      id: user.id,
+      name: (user.firstName + " " + user.lastName || "").trim(),
+    };
+  }, [user]);
 
   const parseSavedTask = () => {
     const savedTask = JSON.parse(
@@ -71,8 +79,8 @@ export const TaskCreate: FC<{
     try {
       setTitle(savedTask.title);
       setDesc(savedTask.desc);
-      setCost(savedTask?.reward?.split(" ")[0] || "");
-      setCurrency(savedTask?.reward?.split(" ")[1] as CurrencyType);
+      setCost(savedTask?.reward?.cost);
+      setCurrency(savedTask?.reward?.currency as CurrencyType);
       setAttachments(savedTask.attachments || []);
       setLocation(savedTask.location);
     } catch {
@@ -84,20 +92,20 @@ export const TaskCreate: FC<{
     (
       title: string,
       desc: string,
-      cost: string,
+      cost: number,
       currency: CurrencyType,
       attachments: string[],
       location: GeoLocationStateType,
-      customerId: string
+      customer: UserType
     ) => {
       const newTask: TaskStateType = {
         id: Date.now().toString(),
         title: title,
         desc: desc,
-        reward: cost + " " + currency,
+        reward: { cost: cost, currency: currency },
         attachments: attachments,
         location: location,
-        customer: customerId,
+        customer: customer,
         status: "open",
       };
       return newTask;
@@ -121,7 +129,7 @@ export const TaskCreate: FC<{
     if (
       title.trim() !== "" ||
       desc.trim() !== "" ||
-      cost.trim() !== "" ||
+      cost !== 0 ||
       (currency || "").trim() !== "" ||
       attachments.length > 0 ||
       location.available
@@ -138,7 +146,7 @@ export const TaskCreate: FC<{
             currency || "TON",
             attachments,
             location,
-            customerId
+            customer
           )
         )
       );
@@ -153,7 +161,7 @@ export const TaskCreate: FC<{
     currency,
     attachments,
     location,
-    customerId,
+    customer,
     compileTask,
   ]);
 
@@ -188,7 +196,7 @@ export const TaskCreate: FC<{
     if (
       title.trim().length === 0 ||
       desc.trim().length === 0 ||
-      cost.length === 0 ||
+      cost === 0 ||
       (currency || "") === "" ||
       !location.available
     )
@@ -200,17 +208,17 @@ export const TaskCreate: FC<{
       currency || "TON",
       attachments,
       location,
-      customerId
+      customer
     );
     dispatch(addTask(newTask));
     setHasChanges(false);
     sessionStorage.removeItem("created-task");
-    closeModal();
+    navigate("/tasks/task/" + newTask.id);
   };
   const handleCancelClick = () => {
     setHasChanges(false);
     sessionStorage.removeItem("saved-task");
-    closeModal();
+    navigate("/tasks/list");
   };
 
   const [isImgFullscreen, setImageFullscreen] = useState(false);
@@ -228,13 +236,19 @@ export const TaskCreate: FC<{
 
   return (
     <div>
-      <div>
-        {hasChanges && (
-          <div className="bg-yellow-400 text-center rounded-lg mb-1">
-            You have uncommited changes!!!
-          </div>
-        )}
-        <List className="flex flex-col gap-2 h-full">
+      {hasChanges && (
+        <div className="bg-yellow-400 text-center rounded-lg mb-1">
+          You have uncommited changes!!!
+        </div>
+      )}
+      <div className="p-2 flex align-middle items-center justify-between w-full">
+        <Title>Task creation</Title>
+        <Button mode="plain" onClick={() => history.back()}>
+          Back
+        </Button>
+      </div>
+      <List className="flex flex-col gap-2 h-full">
+        <Section header={<SectionHeader>New task</SectionHeader>}>
           {
             //Title
           }
@@ -313,18 +327,16 @@ export const TaskCreate: FC<{
                   inputMode="numeric"
                   type="number"
                   status={
-                    cost.length === 0 && formNotFilledAlert
-                      ? "error"
-                      : "default"
+                    cost === 0 && formNotFilledAlert ? "error" : "default"
                   }
                   value={cost || ""}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setCost(e.currentTarget.value);
+                    setCost(Number(e.currentTarget.value));
                   }}
                 />
                 <Caption
                   className="pl-8 text-red-400"
-                  hidden={!(cost.length === 0 && formNotFilledAlert)}
+                  hidden={!(cost === 0 && formNotFilledAlert)}
                 >
                   This field is required
                 </Caption>
@@ -342,12 +354,6 @@ export const TaskCreate: FC<{
                     mode={currency === "USDT" ? "bezeled" : "plain"}
                   >
                     USDT
-                  </InlineButtonsItem>
-                  <InlineButtonsItem
-                    onClick={() => setCurrency("BTC")}
-                    mode={currency === "BTC" ? "bezeled" : "plain"}
-                  >
-                    BTC
                   </InlineButtonsItem>
                 </InlineButtons>
                 <Caption
@@ -468,9 +474,9 @@ export const TaskCreate: FC<{
               />
             </Cell>
           </div>
-        </List>
-      </div>
-      <div className="sticky bottom-0 pt-8">
+        </Section>
+      </List>
+      <div className="pt-4">
         <div className="flex flex-row justify-center items-center">
           <Button className="bg-green-400 w-full" onClick={handleCreateClick}>
             Create

@@ -1,6 +1,9 @@
-import React, { ChangeEvent, useEffect, useState, type FC } from "react";
-import { useInitData, useMiniApp } from "@telegram-apps/sdk-react";
-
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useAppSelector } from "@/store/hooks";
+import { isUserEdited, setUserEdited } from "@/store/slices/changesStateSlice";
+import { selectLocation } from "@/store/slices/locationSlice";
+import { selectUser, UserState } from "@/store/slices/userSlice";
+import { useMiniApp } from "@telegram-apps/sdk-react";
 import {
   Avatar,
   Badge,
@@ -10,23 +13,16 @@ import {
   FileInput,
   Input,
   List,
-  Placeholder,
   Section,
   Title,
 } from "@telegram-apps/telegram-ui";
-import { useAppSelector } from "@/store/hooks";
-import {
-  selectUser,
-  setUser as setUserStore,
-  UserState,
-} from "@/store/slices/userSlice";
+import { ChangeEvent, FC, useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+
+import { setUser as setUserStore } from "@/store/slices/userSlice";
 
 import avatarPlaceholderBlack from "./avatar_placeholder_black.png";
 import avatarPlaceholderWhite from "./avatar_placeholder_white.png";
-import { useDispatch } from "react-redux";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { isUserEdited, setUserEdited } from "@/store/slices/changesStateSlice";
-import { selectLocation } from "@/store/slices/locationSlice";
 
 const fields = [
   //Personal
@@ -45,8 +41,14 @@ const fields = [
   { sector: "personal", name: "email", displayName: "Email", editable: true },
   {
     sector: "personal",
-    name: "fullName",
-    displayName: "Full name",
+    name: "firstName",
+    displayName: "First name",
+    editable: true,
+  },
+  {
+    sector: "personal",
+    name: "lastName",
+    displayName: "Last name",
     editable: true,
   },
   //System
@@ -119,9 +121,7 @@ const geolocationFields = [
   },
 ] as const;
 
-export const Profile: FC = () => {
-  const initData = useInitData();
-
+export const UserInfo: FC = () => {
   const dispatch = useDispatch();
 
   const miniApp = useMiniApp();
@@ -183,11 +183,13 @@ export const Profile: FC = () => {
     }
   }, [userStore, hasChanges]);
 
+  const [jiggle, setJiggle] = useState(false);
   //Toggle edit mode
   const handleEditMode = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     console.log("Edit mode handler");
     setEditing(true);
+    if (hasChanges) setJiggle(true);
     if (editing && !hasChanges) {
       setEditing(false);
     }
@@ -224,25 +226,11 @@ export const Profile: FC = () => {
 
   const [multiline, setMultiline] = useState(false);
 
-  if (!initData) {
-    return (
-      <Placeholder
-        header="Oops"
-        description="Application was launched with missing init data"
-      >
-        <img
-          alt="Telegram sticker"
-          src="https://xelene.me/telegram.gif"
-          style={{ display: "block", width: "144px", height: "144px" }}
-        />
-      </Placeholder>
-    );
-  }
   if (!user) {
     return <ErrorBoundary>Something went wrong with user</ErrorBoundary>;
   }
   return (
-    <div className="md:container md:mx-auto pt-2">
+    <div className="md:container md:mx-auto">
       {hasChanges && (
         <div className="bg-yellow-400 text-center rounded-lg mb-1">
           You have uncommited changes!!!
@@ -250,7 +238,14 @@ export const Profile: FC = () => {
       )}
       <div className="p-2 flex align-middle items-center justify-between w-full">
         <Title>My profile</Title>
-        <Button mode="plain" onClick={handleEditMode}>
+        <Button
+          mode="plain"
+          onClick={handleEditMode}
+          className={jiggle ? "animate-jiggle text-red-400" : ""}
+          onAnimationEnd={() => {
+            setJiggle(false);
+          }}
+        >
           Edit
         </Button>
       </div>
@@ -330,10 +325,16 @@ export const Profile: FC = () => {
                                   email: e.currentTarget.value,
                                 });
                                 break;
-                              case "fullName":
+                              case "firstName":
                                 setUser({
                                   ...user,
-                                  fullName: e.currentTarget.value,
+                                  firstName: e.currentTarget.value,
+                                });
+                                break;
+                              case "lastName":
+                                setUser({
+                                  ...user,
+                                  lastName: e.currentTarget.value,
                                 });
                                 break;
                               default:
@@ -424,7 +425,7 @@ export const Profile: FC = () => {
         </Section>
       </List>
       {editing && (
-        <div className="sticky bottom-1">
+        <div className="sticky bottom-12">
           <div className="flex flex-row justify-center items-center">
             <Button
               className="bg-green-400 w-full"

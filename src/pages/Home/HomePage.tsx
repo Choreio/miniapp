@@ -1,7 +1,7 @@
 import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import { type FC } from "react";
 
-export const Home: FC = () => {
+export const HomePage: FC = () => {
   const wallet = useTonWallet();
   const [tonConnectUI] = useTonConnectUI();
   const transaction = {

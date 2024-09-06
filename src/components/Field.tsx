@@ -3,9 +3,19 @@ import { FC, useState } from "react";
 
 type FieldProps = {
   title: string | undefined;
-  children: React.JSX.Element | string | undefined;
+  children:
+    | React.JSX.Element
+    | React.JSX.Element[]
+    | string
+    | boolean
+    | undefined;
+  editMode?: boolean;
 };
-export const Field: FC<FieldProps> = ({ title, children }) => {
+export const Field: FC<FieldProps> = ({
+  title,
+  children,
+  editMode = false,
+}) => {
   const [multiline, setMultiline] = useState(false);
 
   return (
@@ -17,9 +27,13 @@ export const Field: FC<FieldProps> = ({ title, children }) => {
       >
         {title}
       </Caption>
-      <Cell multiline={multiline} onClick={() => setMultiline((cur) => !cur)}>
-        {children}
-      </Cell>
+      {editMode ? (
+        children
+      ) : (
+        <Cell multiline={multiline} onClick={() => setMultiline((cur) => !cur)}>
+          {children}
+        </Cell>
+      )}
     </div>
   );
 };

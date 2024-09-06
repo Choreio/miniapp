@@ -5,7 +5,7 @@ import { AccordionSummary } from "@telegram-apps/telegram-ui/dist/components/Blo
 import { FC, useEffect, useState } from "react";
 import { TaskMiniCard } from "./TaskCard";
 
-export const TasksList: FC<{
+export const TasksAccordeon: FC<{
   tasks: TaskStateType[];
   title: string;
   open?: boolean;

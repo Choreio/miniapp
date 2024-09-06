@@ -14,9 +14,9 @@ import {
 } from "@telegram-apps/sdk-react";
 import { AppRoot, Placeholder, Spinner } from "@telegram-apps/telegram-ui";
 import { Suspense, useCallback, useEffect, useMemo } from "react";
-import { Navigate, Route, Router, Routes } from "react-router-dom";
+import { Router } from "react-router-dom";
 
-import { routes } from "@/navigation/routes.tsx";
+import { CustomRoutes } from "@/navigation/routes.tsx";
 import { Header } from "@/pages/Nav/Header";
 import { Navigation } from "@/pages/Nav/Navigation";
 import { setUser, UserState } from "@/store/slices/userSlice";
@@ -48,8 +48,9 @@ export function App() {
       const user: UserState = {
         id: initUser.id.toString(),
         tg_id: initUser.id.toString(),
-        username: initUser?.username,
-        fullName: (initUser.firstName + " " + (initUser.lastName || "")).trim(),
+        username: initUser?.username?.trim(),
+        firstName: initUser.firstName.trim(),
+        lastName: initUser?.lastName?.trim(),
         languageCode: initUser?.languageCode,
         photoUrl: initUser?.photoUrl,
         role: "user",
@@ -159,7 +160,7 @@ export function App() {
 
   const postEvent = createPostEvent("7.7");
   postEvent("web_app_setup_swipe_behavior", { allow_vertical_swipe: false });
-  postEvent("web_app_setup_back_button", { is_visible: false });
+  postEvent("web_app_setup_back_button", { is_visible: true });
   postEvent("web_app_expand");
 
   const launchParams = useAppSelector(selectLP);
@@ -200,17 +201,7 @@ export function App() {
             </div>
           }
         >
-          <Routes>
-            {routes.map((route) => (
-              <Route key={route.path} {...route}>
-                {route.childrens &&
-                  route.childrens.map((child) => {
-                    return <Route key={child.path} {...child} />;
-                  })}
-              </Route>
-            ))}
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+          <CustomRoutes />
         </Suspense>
       </Router>
     </AppRoot>

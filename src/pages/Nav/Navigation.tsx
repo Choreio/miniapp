@@ -2,16 +2,15 @@ import { Badge, TabsList } from "@telegram-apps/telegram-ui";
 import { useEffect, useState } from "react";
 import { TabsItem } from "@telegram-apps/telegram-ui/dist/components/Navigation/TabsList/components/TabsItem/TabsItem";
 import {
-  ArchiveBoxIcon,
+  NewspaperIcon,
   BriefcaseIcon,
   ChatBubbleOvalLeftEllipsisIcon,
   HomeIcon,
-  MapIcon,
   UserIcon,
 } from "@heroicons/react/24/solid";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/store/hooks";
-import { anyTaskEdited, isUserEdited } from "@/store/slices/changesStateSlice";
+import { isUserEdited } from "@/store/slices/changesStateSlice";
 import { countActiveTasks } from "@/store/slices/tasksSlice";
 import { selectUser } from "@/store/slices/userSlice";
 
@@ -20,7 +19,6 @@ export function Navigation() {
   const location = useLocation();
 
   const hasChangesProfile = useAppSelector(isUserEdited);
-  const hasChangesTasks = useAppSelector(anyTaskEdited);
 
   const user = useAppSelector(selectUser);
   const activeCount = useAppSelector((state) =>
@@ -29,30 +27,9 @@ export function Navigation() {
   const [activeTab, setActiveTab] = useState(location.pathname);
 
   useEffect(() => {
-    setActiveTab(location.pathname);
+    setActiveTab(location.pathname.split("/")[1]);
   }, [location]);
-  const routes = [
-    {
-      to: "/profile",
-      title: "Profile",
-    },
-    {
-      to: "/mytasks",
-      title: "My tasks",
-    },
-    {
-      to: "/",
-      title: "Home",
-    },
-    {
-      to: "/tasks",
-      title: "Tasks",
-    },
-    {
-      to: "/chat",
-      title: "Chat",
-    },
-  ];
+
   const handleNavClick = (to: string) => {
     setActiveTab(to);
     location.pathname === to
@@ -65,66 +42,68 @@ export function Navigation() {
         aria-label="Global"
         className="w-full h-20 flex justify-around pl-2 pr-2"
       >
-        {routes.map(({ to, title }) => {
-          return (
-            <TabsItem
-              key={title}
-              title={title}
-              selected={activeTab === to}
-              onClick={() => {
-                handleNavClick(to);
-              }}
-              className="flex h-full w-1/5 items-center justify-center"
+        <TabsItem
+          title="Profile"
+          onClick={() => handleNavClick("/profile")}
+          selected={activeTab === "profile"}
+          className="h-full"
+        >
+          <UserIcon className="h-12 w-12 m-auto" />
+          {hasChangesProfile && (
+            <Badge
+              className="absolute top-1 right-1 bg-yellow-600 animate-pulse"
+              type="number"
             >
-              {title === "Home" && <HomeIcon className="h-12 w-12 m-auto" />}
-              {title === "Profile" && (
-                <div>
-                  <UserIcon className="h-12 w-12 m-auto" />
-                  {hasChangesProfile && (
-                    <Badge
-                      className="absolute top-1 right-1 bg-yellow-600 animate-pulse"
-                      type="number"
-                    >
-                      !
-                    </Badge>
-                  )}
-                </div>
-              )}
-              {title === "Map" && <MapIcon className="h-12 w-12 m-auto" />}
-              {title === "Chat" && (
-                <ChatBubbleOvalLeftEllipsisIcon className="h-12 w-12 m-auto" />
-              )}
-              {title === "Tasks" && (
-                <div>
-                  <BriefcaseIcon className="h-12 w-12 m-auto" />
-                  {activeCount > 0 && (
-                    <Badge
-                      className="absolute top-1 right-1"
-                      type="number"
-                      mode="primary"
-                    >
-                      {activeCount}
-                    </Badge>
-                  )}
-                </div>
-              )}
-              {title === "My tasks" && (
-                <div>
-                  <ArchiveBoxIcon className="h-12 w-12 m-auto" />
-                  {hasChangesTasks && (
-                    <Badge
-                      className="absolute top-1 right-1 bg-yellow-600 animate-pulse"
-                      type="number"
-                    >
-                      !
-                    </Badge>
-                  )}
-                </div>
-              )}
-              <span className="text-sm">{title}</span>
-            </TabsItem>
-          );
-        })}
+              !
+            </Badge>
+          )}
+          <span className="text-sm">{"Profile"}</span>
+        </TabsItem>
+        <TabsItem
+          title="Tasks"
+          onClick={() => handleNavClick("/tasks/all/list")}
+          selected={activeTab === "tasks"}
+          className="h-full"
+        >
+          <BriefcaseIcon className="h-12 w-12 m-auto" />
+          {activeCount > 0 && (
+            <Badge
+              className="absolute top-1 right-1"
+              type="number"
+              mode="primary"
+            >
+              {activeCount}
+            </Badge>
+          )}
+          <span className="text-sm">{"Tasks"}</span>
+        </TabsItem>
+        <TabsItem
+          title="Home"
+          onClick={() => handleNavClick("/")}
+          selected={activeTab === ""}
+          className="h-full"
+        >
+          <HomeIcon className="h-12 w-12 m-auto" />
+          <span className="text-sm">{"Home"}</span>
+        </TabsItem>
+        <TabsItem
+          title="News"
+          onClick={() => handleNavClick("/news")}
+          selected={activeTab === "news"}
+          className="h-full"
+        >
+          <NewspaperIcon className="h-12 w-12 m-auto" />
+          <span className="text-sm">{"News"}</span>
+        </TabsItem>
+        <TabsItem
+          title="Chat"
+          onClick={() => handleNavClick("/chat")}
+          selected={activeTab === "chat"}
+          className="h-full"
+        >
+          <ChatBubbleOvalLeftEllipsisIcon className="h-12 w-12 m-auto" />
+          <span className="text-sm">{"Chat"}</span>
+        </TabsItem>
       </TabsList>
     </footer>
   );

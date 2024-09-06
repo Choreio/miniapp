@@ -123,7 +123,7 @@ export const GeoguesserInput: FC<GeoguesserInputType> = ({
         }
         value={addressInput}
         status={status}
-        placeholder="Enter your address"
+        placeholder="Address..."
         onChange={handleGeopositionInput}
         //onBlur={hideTooltip}
         onFocus={() => {

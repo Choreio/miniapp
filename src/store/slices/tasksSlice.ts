@@ -4,16 +4,26 @@ import { GeoLocationStateType } from "./locationSlice";
 import { deleteEditedTask } from "./changesStateSlice";
 
 type SpecialsType = "new" | "hot" | "high price";
-type StatusType = "open" | "active" | "closed";
+export type StatusType = "open" | "active" | "closed";
+export type CurrencyType = "TON" | "USDT";
+
+export type RewardType = {
+  cost: number;
+  currency: CurrencyType;
+};
+export type UserType = {
+  id: string;
+  name: string;
+};
 export interface TaskStateType {
   id: string;
   specials?: SpecialsType;
   status: StatusType;
   title: string;
   desc: string;
-  reward: string;
-  customer: string;
-  acceptedBy?: string;
+  reward: RewardType;
+  customer: UserType;
+  acceptedBy?: UserType;
   attachments?: string[];
   location: GeoLocationStateType;
 }
@@ -25,12 +35,12 @@ const initialState: TaskStateType[] = [
     status: "open",
     title: "Get out trash",
     desc: "There will be 2 bags of garbage",
-    reward: "20000 TON",
+    reward: { cost: 20000, currency: "TON" },
     attachments: [
       "https://loremflickr.com/890/420",
       "https://loremflickr.com/1920/1080",
     ],
-    customer: "Your mom",
+    customer: { id: "101023", name: "Your mom" },
     location: {
       available: true,
       latLong: { latitude: 55.80738, longitude: 37.463763 },
@@ -49,9 +59,9 @@ const initialState: TaskStateType[] = [
     status: "open",
     title: "Deliver package",
     desc: "There will be little box about 1kg",
-    reward: "26000 TON",
+    reward: { cost: 26000, currency: "TON" },
     attachments: ["https://loremflickr.com/1080/720"],
-    customer: "Steven Johnes",
+    customer: { id: "1923719", name: "Steven Johnes" },
     location: {
       available: true,
       latLong: {
@@ -73,13 +83,13 @@ const initialState: TaskStateType[] = [
     status: "open",
     title: "Get an order from shop and deliver to me",
     desc: "There will be big shelf",
-    reward: "2000000 TON",
+    reward: { cost: 2000000, currency: "TON" },
     attachments: [
       "https://loremflickr.com/1080/920",
       "https://loremflickr.com/890/420",
       "https://loremflickr.com/1920/1080",
     ],
-    customer: "Willy Hoghs",
+    customer: { id: "928374928374", name: "Willy Hoghs" },
     location: {
       available: true,
       latLong: {
@@ -101,7 +111,7 @@ const initialState: TaskStateType[] = [
     status: "open",
     title: "Get an order from shop and deliver to me",
     desc: "There will be big shelf",
-    reward: "2000000 TON",
+    reward: { cost: 2000000, currency: "TON" },
     attachments: [
       "https://loremflickr.com/1080/720",
       "https://loremflickr.com/100/200",
@@ -109,7 +119,7 @@ const initialState: TaskStateType[] = [
       "https://loremflickr.com/890/420",
       "https://loremflickr.com/1920/1080",
     ],
-    customer: "99281932",
+    customer: { id: "99281932", name: "Myself tipa" },
     location: {
       available: true,
       latLong: {
@@ -153,12 +163,12 @@ export const tasksSlice = createSlice({
     },
     setStatus: (
       state,
-      action: PayloadAction<{ id: string; status: StatusType; userId: string }>
+      action: PayloadAction<{ id: string; status: StatusType; user: UserType }>
     ) => {
       const task = state.find((task) => task.id === action.payload.id);
       if (task) {
         task.status = action.payload.status;
-        task.acceptedBy = action.payload.userId;
+        task.acceptedBy = action.payload.user;
       }
     },
     deleteTask: (state, action: PayloadAction<string>) => {
@@ -175,7 +185,7 @@ export const selectTasks = (state: RootState) => state.tasks;
 
 export const countActiveTasks = (state: RootState, userId: string) =>
   state.tasks.filter(
-    (task) => task.acceptedBy === userId && task.status === "active"
+    (task) => task.acceptedBy?.id === userId && task.status === "active"
   ).length;
 
 export const selectTaskByID = (state: RootState, taskId: string) =>
