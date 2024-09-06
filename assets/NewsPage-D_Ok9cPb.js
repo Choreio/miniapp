@@ -1,0 +1,1 @@
+import{j as e}from"./index-B9LBRVgm.js";const t=()=>e.jsx("div",{className:"md:container md:mx-auto text-center",children:e.jsx("div",{className:"pt-4 h-full",children:e.jsx("h1",{className:"text-6xl",children:"News will be added soon..."})})});export{t as NewsPage};

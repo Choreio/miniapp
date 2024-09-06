@@ -1,0 +1,1 @@
+const a=t=>Number(t)*Math.PI/180,h=(t,s)=>{if(!t||!s)return 0;const d=6378.137,c=a(s.latitude)-a(t.latitude),e=a(s.longitude)-a(t.longitude),n=Math.sin(c/2)*Math.sin(c/2)+Math.cos(a(t.latitude))*Math.cos(a(s.latitude))*Math.sin(e/2)*Math.sin(e/2),r=2*Math.atan2(Math.sqrt(n),Math.sqrt(1-n)),u=d*r;return Number(u.toFixed(3))};export{h as c};
