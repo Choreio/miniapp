@@ -1,1 +1,0 @@
-import{r as t,_ as p,j as c,l as n,n as m,m as d}from"./index-B9LBRVgm.js";const f=t.forwardRef((s,e)=>{var{Component:a="span",className:r}=s,o=p(s,["Component","className"]);return c.jsx(a,n(d({},o),{ref:e,className:m("tgui-b9fd8cdf929947df",r)}))});export{f as V};

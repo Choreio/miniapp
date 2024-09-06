@@ -1,0 +1,1 @@
+import{j as t}from"./index-BOnYdaJs.js";const s=()=>t.jsx("div",{className:"md:container md:mx-auto text-center",children:t.jsx("div",{className:"pt-4 h-full",children:t.jsx("h1",{className:"text-6xl",children:"Settings section"})})});export{s as Settings};
