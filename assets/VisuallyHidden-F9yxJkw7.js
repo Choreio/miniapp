@@ -1,1 +1,0 @@
-import{r as t,_ as p,j as c,p as n,v as d,q as m}from"./index-BItDmxcL.js";const f=t.forwardRef((s,e)=>{var{Component:a="span",className:r}=s,o=p(s,["Component","className"]);return c.jsx(a,n(m({},o),{ref:e,className:d("tgui-b9fd8cdf929947df",r)}))});export{f as V};
