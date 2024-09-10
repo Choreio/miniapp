@@ -1,1 +1,0 @@
-import{r as a,j as t,C as n}from"./index-D-Qj-lJl.js";import{C as m}from"./Section-Cn6Qtz-2.js";const p=({title:s,children:e,editMode:l=!1})=>{const[i,o]=a.useState(!1);return t.jsxs("div",{children:[t.jsx(n,{level:"2",weight:"2",className:"pl-6 text-[--tg-theme-hint-color]",children:s}),l?e:t.jsx(m,{multiline:i,onClick:()=>o(r=>!r),children:e})]})};export{p as F};
