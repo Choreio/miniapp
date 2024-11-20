@@ -1,3 +1,4 @@
+import { Page404 } from "@/components/Page404";
 import type { ComponentType, FC, JSX } from "react";
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
@@ -16,6 +17,7 @@ const HomePage = React.lazy(() =>
     default: HomePage,
   }))
 );
+
 const ProfilePage = React.lazy(() =>
   import("@/pages/Profile/ProfilePage").then(({ ProfilePage }) => ({
     default: ProfilePage,
@@ -92,15 +94,11 @@ export const CustomRoutes: FC = () => {
           <Route Component={AllTasksTab} path="all/:mode"></Route>
           <Route Component={MyTasksTab} path="my/:mode"></Route>
           <Route Component={TaskCreate} path="create"></Route>
-          <Route
-            path="tasks/*"
-            element={<Navigate to="tasks/all/list" />}
-            index
-          />
+          <Route element={<Navigate to="/tasks/all/list" />} index />
         </Route>
         <Route Component={ChatPage} path="chat"></Route>
         <Route Component={NewsPage} path="news"></Route>
-        <Route path="*" element={<Navigate to="" />} />
+        <Route path="*" Component={Page404} />
       </Routes>
     </>
   );

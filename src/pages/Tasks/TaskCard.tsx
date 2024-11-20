@@ -1,10 +1,9 @@
 import { useAppSelector } from "@/store/hooks";
 import {
-  CurrencyType,
   deleteTask,
   selectTaskByID,
   setStatus,
-  setTask,
+  setTask as setTaskStore,
   TaskStateType,
 } from "@/store/slices/tasksSlice";
 import {
@@ -23,16 +22,13 @@ import {
   FileInput,
 } from "@telegram-apps/telegram-ui";
 
-import React, { FC, useCallback, useEffect, useMemo, useState } from "react";
+import React, { FC, useEffect, useMemo, useState } from "react";
 import {
   addEditedTask,
   deleteEditedTask,
   isTaskEdited,
 } from "@/store/slices/changesStateSlice";
-import {
-  GeoLocationStateType,
-  selectLocation,
-} from "@/store/slices/locationSlice";
+import { selectLocation } from "@/store/slices/locationSlice";
 import { calcDistance } from "@/methods/calcDistance";
 import { useNavigate, useParams } from "react-router-dom";
 import { SectionHeader } from "@telegram-apps/telegram-ui/dist/components/Blocks/Section/components/SectionHeader/SectionHeader";
@@ -96,30 +92,21 @@ export const TaskCard: FC = () => {
   const user = useAppSelector(selectUser);
   const taskId = params["taskId"] || "-1";
 
+  const [hasChanges, setHasChanges] = useState<boolean>(
+    useAppSelector((state) => isTaskEdited(state, taskId)) || false
+  );
+
+  const [editing, setEditing] = useState<boolean>(
+    useAppSelector((state) => isTaskEdited(state, taskId)) || false
+  );
+
   const taskStore = useAppSelector((state) => selectTaskByID(state, taskId));
-
-  //Task fields
-  const [title, setTitle] = useState<string>(taskStore?.title || "");
-
-  const [desc, setDesc] = useState<string>(taskStore?.desc || "");
-
-  const [cost, setCost] = useState<number>(taskStore?.reward?.cost || 0);
-
-  const [currency, setCurrency] = useState<CurrencyType>(
-    taskStore?.reward?.currency || "TON"
+  const taskEdited = JSON.parse(
+    sessionStorage.getItem("edited-task-" + taskId) || "{}"
   );
-
-  const [attachments, setAttachments] = useState<string[]>(
-    taskStore?.attachments || []
+  const [task, setTask] = useState<TaskStateType | undefined>(
+    hasChanges ? taskEdited : taskStore
   );
-
-  const [location, setLocation] = useState<GeoLocationStateType>(
-    taskStore?.location || {
-      available: false,
-    }
-  );
-
-  const customer = useMemo(() => taskStore?.customer, [taskStore]);
 
   //Editing logic
   const editMode = useMemo(
@@ -129,42 +116,33 @@ export const TaskCard: FC = () => {
 
   const [formNotFilledAlert, setFormNotFilledAlert] = useState(false);
 
-  const parseSavedTask = useCallback(() => {
-    const savedTask = JSON.parse(
-      sessionStorage.getItem("edited-task-" + taskId) || "{}"
-    ) as TaskStateType;
+  //Updating changes state
+  useEffect(() => {
+    hasChanges
+      ? dispatch(addEditedTask(taskId))
+      : dispatch(deleteEditedTask(taskId));
+  }, [hasChanges, taskId, dispatch]);
 
-    try {
-      setTitle(savedTask.title);
-      setDesc(savedTask.desc);
-      setCost(savedTask?.reward?.cost || 0);
-      setCurrency(savedTask?.reward?.currency || "TON");
-      setAttachments(savedTask.attachments || []);
-      setLocation(savedTask.location);
-    } catch {
-      console.log("Cant parse saved task");
+  //Check if there are any changes after editing fields
+  useEffect(() => {
+    if (task)
+      if (JSON.stringify(taskStore) !== JSON.stringify(task)) {
+        //Update saved edited task
+        sessionStorage.setItem("edited-task-" + task.id, JSON.stringify(task));
+        setHasChanges(true);
+      } else {
+        setHasChanges(false);
+        sessionStorage.removeItem("edited-task-" + task.id);
+      }
+  }, [task, taskStore]);
+
+  //Update main task object after we dispatch our changes
+  useEffect(() => {
+    if (!hasChanges) {
+      console.log("Sync task");
+      setTask(taskStore);
     }
-  }, [taskId]);
-
-  const compileTask = useCallback(() => {
-    if (taskStore) {
-      const newTask: TaskStateType = {
-        ...taskStore,
-        title: title,
-        desc: desc,
-        reward: { cost, currency },
-        attachments: attachments,
-        location: location,
-      };
-      return newTask;
-    }
-  }, [taskStore, title, desc, cost, currency, attachments, location]);
-
-  const [hasChanges, setHasChanges] = useState<boolean>(
-    useAppSelector((state) => isTaskEdited(state, taskId))
-  );
-
-  const [editing, setEditing] = useState<boolean>(hasChanges || false);
+  }, [taskStore, hasChanges]);
 
   const [jiggle, setJiggle] = useState(false);
   //Toggle edit mode
@@ -178,79 +156,30 @@ export const TaskCard: FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (!hasChanges) {
-      console.log("Update fields on stored task change");
-      setTitle(taskStore?.title || "");
-      setDesc(taskStore?.desc || "");
-      setCost(taskStore?.reward?.cost || 0);
-      setCurrency(taskStore?.reward?.currency || "TON");
-      setAttachments(taskStore?.attachments || []);
-      setLocation(taskStore?.location || { available: false });
-    }
-  }, [taskStore]);
-
-  //Restore onmount
-  useEffect(() => {
-    if (hasChanges) {
-      console.log("Restore edited task");
-      parseSavedTask();
-    }
-  }, []);
-
-  //If any field filled with data, save to sessionStorage
-  useEffect(() => {
-    if (
-      title.trim() !== taskStore?.title ||
-      desc.trim() !== taskStore.desc ||
-      cost !== taskStore.reward.cost ||
-      (currency || "").trim() !== taskStore.reward.currency ||
-      attachments !== taskStore.attachments ||
-      location !== taskStore.location
-    ) {
-      console.log("Changes made");
-      setHasChanges(true);
-    } else {
-      console.log("No changes");
-      setHasChanges(false);
-    }
-  }, [taskStore, title, desc, cost, currency, attachments, location]);
-
-  //If any changes, save to redux storage
-  useEffect(() => {
-    if (hasChanges) {
-      console.log("Save edited task state");
-      sessionStorage.setItem(
-        "edited-task-" + taskId,
-        JSON.stringify(compileTask())
-      );
-      dispatch(addEditedTask(taskId));
-    } else {
-      console.log("Remove edited task state");
-      sessionStorage.removeItem("edited-task-" + taskId);
-      dispatch(deleteEditedTask(taskId));
-    }
-  }, [taskId, hasChanges, dispatch, compileTask]);
-
   const addAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const files = e.currentTarget.files;
-    console.log(files);
-    if (files && files?.length > 0) {
-      const newAttach = [];
-      for (let i = 0; i < files.length; i++) {
-        newAttach.push(URL.createObjectURL(files[i]));
+    if (task) {
+      e.preventDefault();
+      const files = e.currentTarget.files;
+      console.log(files);
+      if (files && files?.length > 0) {
+        const newAttach = [];
+        for (let i = 0; i < files.length; i++) {
+          newAttach.push(URL.createObjectURL(files[i]));
+        }
+        const currentAttach = task.attachments || [];
+        setTask({ ...task, attachments: [...currentAttach, ...newAttach] });
       }
-      const currentAttach = attachments || [];
-      console.log([...currentAttach, ...newAttach]);
-      setAttachments([...currentAttach, ...newAttach]);
     }
   };
 
   const removeAttachment = (index: number) => {
-    const currentAttach = [...attachments];
-    currentAttach.splice(index, 1);
-    setAttachments(currentAttach);
+    if (task) {
+      const currentAttach = [...(task.attachments || [])];
+      console.log(currentAttach);
+      currentAttach.splice(index, 1);
+      console.log(currentAttach);
+      setTask({ ...task, attachments: currentAttach });
+    }
   };
 
   //LightBox logic
@@ -332,259 +261,292 @@ export const TaskCard: FC = () => {
   const handleClickConfirm = () => {
     const inputs = document.getElementsByTagName("input");
     for (let i = 0; i < inputs.length; i++) inputs[i].blur();
-
-    if (
-      title.trim().length === 0 ||
-      desc.trim().length === 0 ||
-      cost === 0 ||
-      !location.available
-    )
-      return setFormNotFilledAlert(true);
-
-    const newTask = compileTask();
-    if (newTask) {
+    if (task) {
+      if (
+        task.title.trim().length === 0 ||
+        task.desc.trim().length === 0 ||
+        task.reward.cost === 0 ||
+        !task.location.available
+      )
+        return setFormNotFilledAlert(true);
       console.log("Save edited task to Redux");
-      dispatch(setTask(newTask));
+      dispatch(setTaskStore(task));
+      dispatch(deleteEditedTask(task.id));
       setHasChanges(false);
       setEditing(false);
     }
   };
 
   const handleClickCancel = () => {
-    setHasChanges(false);
+    console.log("Changes canceled");
+    setTask(taskStore);
     setEditing(false);
-    setTitle(taskStore?.title || "");
-    setDesc(taskStore?.desc || "");
-    setCost(taskStore?.reward?.cost || 0);
-    setCurrency(taskStore?.reward?.currency || "TON");
-    setAttachments(taskStore?.attachments || []);
-    setLocation(taskStore?.location || { available: false });
+    setHasChanges(false);
   };
 
-  if (!taskStore) {
+  if (!taskStore || !task) {
     return <>Task not found</>;
   }
+
   return (
-    <div className="flex flex-col gap-1 h-full">
-      <div className="p-2 flex align-middle items-center justify-between w-full">
-        <Title>Task details</Title>
-        <Button mode="plain" onClick={() => history.back()}>
-          Back
-        </Button>
-      </div>
-      <Section
-        header={
-          <div className="flex justify-between align-middle p-2">
-            <SectionHeader>Task N{taskId}</SectionHeader>
-            {editMode && (
-              <IconButton
-                className={"w-8 h-8 self-end".concat(
-                  " ",
-                  jiggle ? "animate-jiggle text-red-400" : ""
-                )}
-                onClick={handleEditMode}
-                onAnimationEnd={() => {
-                  setJiggle(false);
-                }}
-              >
-                <PencilIcon></PencilIcon>
-              </IconButton>
-            )}
-          </div>
-        }
-      >
+    <div>
+      <div className="flex flex-col gap-1 h-full">
         {hasChanges && (
           <div className="bg-yellow-400 text-center rounded-lg mb-1">
             You have uncommited changes!!!
           </div>
         )}
-        <List className="flex flex-col gap-2 h-full">
-          {
-            //Title
-          }
-          <Field title="Title" editMode={editing}>
-            <>
-              {editing ? (
-                <Input
-                  value={title}
-                  status={title.length === 0 ? "error" : "default"}
-                  placeholder="Title..."
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    const text = e.currentTarget.value;
-                    setTitle(text);
-                  }}
-                />
-              ) : (
-                title
-              )}
-              <Caption
-                className="pl-8 text-red-400"
-                hidden={!(title.length === 0)}
-              >
-                This field cant be empty
-              </Caption>
-            </>
-          </Field>
-          {
-            //Description
-          }
-          <Field title="Description" editMode={editing}>
-            <>
-              {editing ? (
-                <Input
-                  placeholder="Description..."
-                  value={desc}
-                  status={desc.length === 0 ? "error" : "default"}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setDesc(e.currentTarget.value)
-                  }
-                />
-              ) : (
-                desc
-              )}
-              <Caption
-                className="pl-8 text-red-400"
-                hidden={!(desc.length === 0)}
-              >
-                This field cant be empty
-              </Caption>
-            </>
-          </Field>
-          {
-            //Reward
-          }
-          <Field title="Reward" editMode={editing}>
-            <>
-              {editing ? (
-                <div className="flex items-center justify-stretch h-fit">
-                  <div className="w-2/5 h-full flex flex-col justify-between">
+        <div className="p-2 flex align-middle items-center justify-between w-full">
+          <Title>Task details</Title>
+          <Button mode="plain" onClick={() => history.back()}>
+            Back
+          </Button>
+        </div>
+        <List>
+          <Section
+            header={
+              <div className="flex justify-between align-middle p-2">
+                <SectionHeader>Task N{taskId}</SectionHeader>
+                {editMode && (
+                  <IconButton
+                    className={"w-8 h-8 self-end".concat(
+                      " ",
+                      jiggle ? "animate-jiggle text-red-400" : ""
+                    )}
+                    onClick={handleEditMode}
+                    onAnimationEnd={() => {
+                      setJiggle(false);
+                    }}
+                  >
+                    <PencilIcon></PencilIcon>
+                  </IconButton>
+                )}
+              </div>
+            }
+          >
+            <List className="flex flex-col gap-2 h-full">
+              {
+                //Title
+              }
+              <Field title="Title" editMode={editing} type={"text"}>
+                <>
+                  {editing ? (
                     <Input
-                      placeholder="Cost..."
-                      inputMode="numeric"
-                      type="number"
-                      status={cost === 0 ? "error" : "default"}
-                      value={cost || ""}
+                      value={task.title}
+                      status={task.title.length === 0 ? "error" : undefined}
+                      placeholder="Title..."
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        setCost(Number(e.currentTarget.value));
+                        const text = e.currentTarget.value;
+                        setTask({ ...task, title: text });
                       }}
                     />
+                  ) : (
+                    task.title
+                  )}
+                  <Caption
+                    className="pl-8 text-red-400"
+                    hidden={!(task.title.length === 0)}
+                  >
+                    This field cant be empty
+                  </Caption>
+                </>
+              </Field>
+              {
+                //Description
+              }
+              <Field title="Description" editMode={editing} type={"text"}>
+                <>
+                  {editing ? (
+                    <Input
+                      placeholder="Description..."
+                      value={task.desc}
+                      status={task.desc.length === 0 ? "error" : undefined}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setTask({ ...task, desc: e.currentTarget.value })
+                      }
+                    />
+                  ) : (
+                    task.desc
+                  )}
+                  <Caption
+                    className="pl-8 text-red-400"
+                    hidden={!(task.desc.length === 0)}
+                  >
+                    This field cant be empty
+                  </Caption>
+                </>
+              </Field>
+              {
+                //Reward
+              }
+              <Field title="Reward" editMode={editing} type={"text"}>
+                <>
+                  {editing ? (
+                    <div className="flex items-center justify-stretch h-fit">
+                      <div className="w-2/5 h-full flex flex-col justify-between">
+                        <Input
+                          placeholder="Cost..."
+                          inputMode="numeric"
+                          type="number"
+                          status={task.reward.cost === 0 ? "error" : undefined}
+                          value={task.reward.cost || ""}
+                          onChange={(
+                            e: React.ChangeEvent<HTMLInputElement>
+                          ) => {
+                            setTask({
+                              ...task,
+                              reward: {
+                                ...task.reward,
+                                cost: Number(e.currentTarget.value),
+                              },
+                            });
+                          }}
+                        />
+                        <Caption
+                          className="pl-8 text-red-400"
+                          hidden={
+                            !(task.reward.cost === 0 && formNotFilledAlert)
+                          }
+                        >
+                          This field cant be empty
+                        </Caption>
+                      </div>
+                      <div className="w-3/5 flex flex-col h-full justify-between">
+                        <InlineButtons className="h-12 items-center">
+                          <InlineButtonsItem
+                            onClick={() =>
+                              setTask({
+                                ...task,
+                                reward: { ...task.reward, currency: "TON" },
+                              })
+                            }
+                            mode={
+                              task.reward.currency === "TON"
+                                ? "bezeled"
+                                : "plain"
+                            }
+                          >
+                            TON
+                          </InlineButtonsItem>
+                          <InlineButtonsItem
+                            onClick={() =>
+                              setTask({
+                                ...task,
+                                reward: { ...task.reward, currency: "USDT" },
+                              })
+                            }
+                            mode={
+                              task.reward.currency === "USDT"
+                                ? "bezeled"
+                                : "plain"
+                            }
+                          >
+                            USDT
+                          </InlineButtonsItem>
+                        </InlineButtons>
+                      </div>
+                    </div>
+                  ) : (
+                    task.reward.cost + " " + task.reward.currency
+                  )}
+                </>
+              </Field>
+              {
+                //Attachments
+              }
+              {task.attachments && task.attachments.length > 0 && (
+                <Field title="Attachments" type={"other"}>
+                  <div className="pl-6 pr-6 p-2 grid grid-flow-row grid-cols-3 gap-2">
+                    {task.attachments.map((attachment, index) => {
+                      return (
+                        <div key={index + attachment} className="relative">
+                          <Image
+                            size={96}
+                            src={attachment}
+                            onClick={() => openImageFullscreen(index)}
+                          />
+                          {editing && (
+                            <XMarkIcon
+                              className="absolute right-0 -top-2 w-6 h-6 border border-gray-500 rounded-full bg-gray-400 bg-opacity-55"
+                              onClick={() => removeAttachment(index)}
+                            ></XMarkIcon>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Field>
+              )}
+              {editing && (
+                <FileInput
+                  multiple
+                  label="Attach a new file"
+                  accept="image/*"
+                  onChange={addAttachment}
+                ></FileInput>
+              )}
+              {
+                //Customer
+              }
+              <Field title="Customer" type={"text"}>
+                {task.customer?.name}
+              </Field>
+              {
+                //Address
+              }
+              <div>
+                <Field title="Address" editMode={editing} type={"other"}>
+                  <>
+                    {editing ? (
+                      <>
+                        <Cell multiline>
+                          {task.location?.address?.formattedAdress}
+                        </Cell>
+                        <GeoguesserInput
+                          status={
+                            !task.location.available && formNotFilledAlert
+                              ? "error"
+                              : undefined
+                          }
+                          geoposition={task.location || { available: false }}
+                          setGeoposition={(geolocation) =>
+                            setTask({ ...task, location: geolocation })
+                          }
+                        />
+                      </>
+                    ) : (
+                      task.location?.address?.formattedAdress
+                    )}
                     <Caption
                       className="pl-8 text-red-400"
-                      hidden={!(cost === 0 && formNotFilledAlert)}
+                      hidden={task.location.available}
                     >
-                      This field cant be empty
+                      Please enter correct address
                     </Caption>
-                  </div>
-                  <div className="w-3/5 flex flex-col h-full justify-between">
-                    <InlineButtons className="h-12 items-center">
-                      <InlineButtonsItem
-                        onClick={() => setCurrency("TON")}
-                        mode={currency === "TON" ? "bezeled" : "plain"}
-                      >
-                        TON
-                      </InlineButtonsItem>
-                      <InlineButtonsItem
-                        onClick={() => setCurrency("USDT")}
-                        mode={currency === "USDT" ? "bezeled" : "plain"}
-                      >
-                        USDT
-                      </InlineButtonsItem>
-                    </InlineButtons>
-                  </div>
-                </div>
-              ) : (
-                cost + " " + currency
-              )}
-            </>
-          </Field>
-          {
-            //Attachments
-          }
-          {attachments && attachments.length > 0 && (
-            <Field title="Attachments">
-              <div className="pl-6 pr-6 p-2 grid grid-flow-row grid-cols-3 gap-2">
-                {attachments.map((attachment, index) => {
-                  return (
-                    <div key={index + attachment} className="relative">
-                      <Image
-                        size={96}
-                        src={attachment}
-                        onClick={() => openImageFullscreen(index)}
-                      />
-                      {editing && (
-                        <XMarkIcon
-                          className="absolute right-0 -top-2 w-6 h-6 border border-gray-500 rounded-full bg-gray-400 bg-opacity-55"
-                          onClick={() => removeAttachment(index)}
-                        ></XMarkIcon>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </Field>
-          )}
-          {editing && (
-            <FileInput
-              multiple
-              label="Attach a new file"
-              accept="image/*"
-              onChange={addAttachment}
-            ></FileInput>
-          )}
-          {
-            //Customer
-          }
-          <Field title="Customer">{customer?.name}</Field>
-          {
-            //Address
-          }
-          <div>
-            <Field title="Address" editMode={editing}>
-              <>
-                {editing ? (
-                  <>
-                    <Cell multiline>{location?.address?.formattedAdress}</Cell>
-                    <GeoguesserInput
-                      status={
-                        !location.available && formNotFilledAlert
-                          ? "error"
-                          : "default"
-                      }
-                      geoposition={location || { available: false }}
-                      setGeoposition={(geolocation) => setLocation(geolocation)}
-                    />
                   </>
-                ) : (
-                  location?.address?.formattedAdress
-                )}
-                <Caption
-                  className="pl-8 text-red-400"
-                  hidden={location.available}
-                >
-                  Please enter correct address
-                </Caption>
-              </>
-            </Field>
-          </div>
-          {
-            //Map
-          }
-          <div className="pb-8">
-            <Field title="On map">
-              <MapContainerYandex
-                available={location.available}
-                type="target"
-                center={{
-                  latitude: Number(location.latLong?.latitude),
-                  longitude: Number(location.latLong?.longitude),
-                }}
-              />
-            </Field>
-          </div>
+                </Field>
+              </div>
+              {
+                //Map
+              }
+              <div className="pb-8">
+                <Field title="On map" type={"other"}>
+                  <MapContainerYandex
+                    available={task.location.available}
+                    type="target"
+                    center={{
+                      latitude: Number(task.location.latLong?.latitude),
+                      longitude: Number(task.location.latLong?.longitude),
+                    }}
+                  />
+                </Field>
+              </div>
+            </List>
+          </Section>
         </List>
-        <div className=" w-full flex justify-around p-4 ">
+        <div className="sticky bottom-24 pl-4 pr-4">
           {!editMode && (
-            <>
+            <div className="flex flex-row justify-center items-center">
               {taskStore.status === "open" && (
                 <Button
                   className="bg-green-600 w-2/6"
@@ -603,10 +565,10 @@ export const TaskCard: FC = () => {
                   Decline
                 </Button>
               )}
-            </>
+            </div>
           )}
           {editMode && !editing && (
-            <>
+            <div className="flex flex-row justify-center items-center">
               {taskStore.status === "open" && (
                 <Button
                   className="bg-red-600 w-1/2"
@@ -616,10 +578,15 @@ export const TaskCard: FC = () => {
                   Delete task
                 </Button>
               )}
-            </>
+              {taskStore.status === "active" && (
+                <Button className="bg-red-600 w-1/2" disabled>
+                  You cant delete active task
+                </Button>
+              )}
+            </div>
           )}
           {editMode && editing && (
-            <>
+            <div className="flex flex-row justify-center items-center">
               <Button
                 className="bg-green-600 w-2/6"
                 onClick={handleClickConfirm}
@@ -634,24 +601,24 @@ export const TaskCard: FC = () => {
               >
                 Cancel
               </Button>
-            </>
+            </div>
           )}
         </div>
-        <Lightbox
-          open={isImgFullscreen}
-          controller={{
-            closeOnPullDown: true,
-            closeOnBackdropClick: true,
-            closeOnPullUp: true,
-          }}
-          close={closeImageFullscreen}
-          index={imageFullscreenIndex}
-          plugins={[Zoom]}
-          slides={taskStore?.attachments?.map((attach) => {
-            return { src: attach };
-          })}
-        ></Lightbox>
-      </Section>
+      </div>
+      <Lightbox
+        open={isImgFullscreen}
+        controller={{
+          closeOnPullDown: true,
+          closeOnBackdropClick: true,
+          closeOnPullUp: true,
+        }}
+        close={closeImageFullscreen}
+        index={imageFullscreenIndex}
+        plugins={[Zoom]}
+        slides={taskStore?.attachments?.map((attach) => {
+          return { src: attach };
+        })}
+      ></Lightbox>
     </div>
   );
 };

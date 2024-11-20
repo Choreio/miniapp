@@ -1,20 +1,14 @@
-import { useIntegration } from "@telegram-apps/react-router-integration";
+//import { useIntegration } from "@telegram-apps/react-router-integration";
 import {
-  bindMiniAppCSSVars,
-  bindThemeParamsCSSVars,
-  bindViewportCSSVars,
   createPostEvent,
-  initNavigator,
-  useInitData,
   useLaunchParams,
-  useMiniApp,
   User,
-  useThemeParams,
-  useViewport,
+  initData,
+  miniApp,
 } from "@telegram-apps/sdk-react";
 import { AppRoot, Placeholder, Spinner } from "@telegram-apps/telegram-ui";
-import { Suspense, useCallback, useEffect, useMemo } from "react";
-import { Router } from "react-router-dom";
+import { Suspense, useCallback, useEffect } from "react";
+import { BrowserRouter } from "react-router-dom";
 
 import { CustomRoutes } from "@/navigation/routes.tsx";
 import { Header } from "@/pages/Nav/Header";
@@ -37,12 +31,8 @@ import { fetchGeocoder } from "../methods/yandexApis";
 
 export function App() {
   const lp = useLaunchParams();
-  const miniApp = useMiniApp();
-  const themeParams = useThemeParams();
-  const viewport = useViewport();
-  const initData = useInitData();
-
   const dispatch = useDispatch();
+
   const bindUser = (initUser: User | undefined) => {
     if (initUser) {
       const user: UserState = {
@@ -104,7 +94,7 @@ export function App() {
   );
 
   useEffect(() => {
-    return initData && bindUser(initData.user);
+    return initData && bindUser(initData.user());
   });
   useEffect(() => {
     return bindLP(lp);
@@ -122,34 +112,17 @@ export function App() {
     );
     if (isGeolocationAvailable && isGeolocationEnabled && coords)
       fetchGeocoder(
-        initData?.user?.languageCode || "en",
+        initData?.user()?.languageCode || "en",
         coords.longitude + ", " + coords.latitude
       ).then((address) => {
         console.log(address);
         return bindGeolocation(address[0]);
       });
-  }, [
-    coords,
-    isGeolocationAvailable,
-    isGeolocationEnabled,
-    bindGeolocation,
-    initData,
-  ]);
-
-  useEffect(() => {
-    return bindMiniAppCSSVars(miniApp, themeParams);
-  }, [miniApp, themeParams]);
-
-  useEffect(() => {
-    return bindThemeParamsCSSVars(themeParams);
-  }, [themeParams]);
-
-  useEffect(() => {
-    return viewport && bindViewportCSSVars(viewport);
-  }, [viewport]);
+  }, [coords, isGeolocationAvailable, isGeolocationEnabled, bindGeolocation]);
 
   // Create a new application navigator and attach it to the browser history, so it could modify
   // it and listen to its changes.
+  /*
   const navigator = useMemo(() => initNavigator("app-navigation-state"), []);
   const [location, reactNavigator] = useIntegration(navigator);
 
@@ -157,10 +130,11 @@ export function App() {
     navigator.attach();
     return () => navigator.detach();
   }, [navigator]);
+  */
 
   const postEvent = createPostEvent("7.7");
   postEvent("web_app_setup_swipe_behavior", { allow_vertical_swipe: false });
-  postEvent("web_app_setup_back_button", { is_visible: true });
+  postEvent("web_app_setup_back_button", { is_visible: false });
   postEvent("web_app_expand");
 
   const launchParams = useAppSelector(selectLP);
@@ -182,28 +156,24 @@ export function App() {
   return (
     <AppRoot
       id="APPROOT"
-      appearance={miniApp.isDark ? "dark" : "light"}
+      appearance={miniApp.isDark() ? "dark" : "light"}
       platform={
         ["macos", "ios"].includes(launchParams.platform) ? "ios" : "base"
       }
-      style={{
-        maxHeight: viewport?.stableHeight,
-        minHeight: viewport?.stableHeight,
-      }}
     >
-      <Router location={location} navigator={reactNavigator}>
+      <BrowserRouter>
         <Header />
         <Navigation />
         <Suspense
           fallback={
-            <div className="flex align-middle justify-center">
+            <div className="h-full flex align-middle justify-center">
               <Spinner size="l"></Spinner>
             </div>
           }
         >
           <CustomRoutes />
         </Suspense>
-      </Router>
+      </BrowserRouter>
     </AppRoot>
   );
 }

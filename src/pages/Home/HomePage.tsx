@@ -1,5 +1,6 @@
 import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import { type FC } from "react";
+import { motion } from "framer-motion";
 
 export const HomePage: FC = () => {
   const wallet = useTonWallet();
@@ -18,20 +19,26 @@ export const HomePage: FC = () => {
     tonConnectUI.sendTransaction(transaction);
   };
   return (
-    <div className="md:container md:mx-auto text-center h-full">
-      <div className="pt-4">
-        <h1 className="text-6xl">Soon...</h1>
-      </div>
-      {wallet && (
-        <div>
-          <button
-            className="w-32 h-8 bg-blue-500 rounded-xl shadow-md hover:bg-blue-600"
-            onClick={donate}
-          >
-            Support us
-          </button>
+    <motion.div
+      initial={{ opacity: 0, x: -100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 100 }}
+    >
+      <div className="md:container md:mx-auto text-center h-full">
+        <div className="pt-4">
+          <h1 className="text-6xl">Soon...</h1>
         </div>
-      )}
-    </div>
+        {wallet && (
+          <div>
+            <button
+              className="w-32 h-8 bg-blue-500 rounded-xl shadow-md hover:bg-blue-600"
+              onClick={donate}
+            >
+              Support us
+            </button>
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 };

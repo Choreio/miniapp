@@ -1,4 +1,8 @@
-import { PlusCircleIcon } from "@heroicons/react/24/solid";
+import {
+  FolderIcon,
+  FolderOpenIcon,
+  PlusCircleIcon,
+} from "@heroicons/react/24/solid";
 import { Tabbar } from "@telegram-apps/telegram-ui";
 import { TabbarItem } from "@telegram-apps/telegram-ui/dist/components/Layout/Tabbar/components/TabbarItem/TabbarItem";
 import { FC } from "react";
@@ -10,16 +14,19 @@ export const TasksPage: FC = () => {
 
   return (
     <div>
-      <div className="pb-12">
+      <div className="pb-24">
         <Outlet />
       </div>
-      <Tabbar style={{ height: "48px" }}>
+      <Tabbar style={{ height: "88px", paddingBottom: "24px" }}>
         <TabbarItem
           text="Tasks"
           selected={location.pathname === "/tasks/all/list"}
           onClick={() => navigate("/tasks/all/list")}
-        ></TabbarItem>
+        >
+          <FolderIcon className="h-7 w-7"></FolderIcon>
+        </TabbarItem>
         <TabbarItem
+          text="New task"
           selected={location.pathname === "/tasks/create"}
           onClick={() => navigate("/tasks/create")}
         >
@@ -29,7 +36,9 @@ export const TasksPage: FC = () => {
           text="My tasks"
           selected={location.pathname === "/tasks/my/list"}
           onClick={() => navigate("/tasks/my/list")}
-        ></TabbarItem>
+        >
+          <FolderOpenIcon className="h-7 w-7"></FolderOpenIcon>
+        </TabbarItem>
       </Tabbar>
     </div>
   );

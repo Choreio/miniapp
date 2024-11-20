@@ -2,8 +2,9 @@ import { Caption, Cell } from "@telegram-apps/telegram-ui";
 import { FC, useState } from "react";
 
 type FieldProps = {
+  type: "text" | "other";
   title: string | undefined;
-  children:
+  children?:
     | React.JSX.Element
     | React.JSX.Element[]
     | string
@@ -12,6 +13,7 @@ type FieldProps = {
   editMode?: boolean;
 };
 export const Field: FC<FieldProps> = ({
+  type,
   title,
   children,
   editMode = false,
@@ -30,7 +32,14 @@ export const Field: FC<FieldProps> = ({
       {editMode ? (
         children
       ) : (
-        <Cell multiline={multiline} onClick={() => setMultiline((cur) => !cur)}>
+        <Cell
+          multiline={multiline}
+          onClick={() => {
+            if (type === "text") {
+              setMultiline((cur) => !cur);
+            }
+          }}
+        >
           {children}
         </Cell>
       )}

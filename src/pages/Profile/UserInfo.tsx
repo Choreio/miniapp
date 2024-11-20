@@ -3,7 +3,7 @@ import { useAppSelector } from "@/store/hooks";
 import { isUserEdited, setUserEdited } from "@/store/slices/changesStateSlice";
 import { selectLocation } from "@/store/slices/locationSlice";
 import { selectUser, UserState } from "@/store/slices/userSlice";
-import { useMiniApp } from "@telegram-apps/sdk-react";
+import { miniApp } from "@telegram-apps/sdk-react";
 import {
   Avatar,
   Badge,
@@ -124,7 +124,6 @@ const geolocationFields = [
 export const UserInfo: FC = () => {
   const dispatch = useDispatch();
 
-  const miniApp = useMiniApp();
   const [editing, setEditing] = useState(useAppSelector(isUserEdited));
   const [hasChanges, setHasChanges] = useState(useAppSelector(isUserEdited));
 
@@ -133,6 +132,7 @@ export const UserInfo: FC = () => {
   const [user, setUser] = useState<UserState | undefined>(
     hasChanges ? userEdited : userStore
   );
+
   const geolocation = useAppSelector(selectLocation);
   const [geolocParsed, setGeolocParsed] = useState({
     available: geolocation.available,
@@ -291,7 +291,7 @@ export const UserInfo: FC = () => {
                         src={
                           user.photoUrl
                             ? user.photoUrl
-                            : miniApp.isDark
+                            : miniApp.isDark()
                             ? avatarPlaceholderWhite
                             : avatarPlaceholderBlack
                         }
@@ -425,7 +425,7 @@ export const UserInfo: FC = () => {
         </Section>
       </List>
       {editing && (
-        <div className="sticky bottom-12">
+        <div className="sticky bottom-24 pl-4 pr-4">
           <div className="flex flex-row justify-center items-center">
             <Button
               className="bg-green-400 w-full"

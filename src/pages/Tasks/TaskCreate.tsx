@@ -476,7 +476,7 @@ export const TaskCreate: FC = () => {
           </div>
         </Section>
       </List>
-      <div className="pt-4">
+      <div className="sticky bottom-24">
         <div className="flex flex-row justify-center items-center">
           <Button className="bg-green-400 w-full" onClick={handleCreateClick}>
             Create

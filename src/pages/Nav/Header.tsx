@@ -14,6 +14,7 @@ export function Header() {
   const user = useAppSelector(selectUser);
 
   const userFriendlyAddress = useTonAddress(); // || "DebguValue";
+
   const [connecting, setConnecting] = useState(false);
 
   function changeConnecting(state: WalletsModalState) {

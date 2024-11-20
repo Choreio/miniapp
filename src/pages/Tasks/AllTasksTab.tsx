@@ -28,14 +28,23 @@ export const AllTasksTab: FC = () => {
   const params = useParams();
   const navigate = useNavigate();
   //Mode of task page map/list
-  const [mode, setMode] = useState<string>(params["mode"] || "list");
+  const [mode, setMode] = useState<string | undefined>(params["mode"]);
+
   const handleChangeModeClick = (mode: "list" | "map") => {
     console.log("Changing mode");
     setMode(mode);
   };
 
   useEffect(() => {
-    navigate("tasks/all/" + mode);
+    if (["list", "map"].includes(params["mode"] || "")) {
+      setMode(params["mode"]);
+    } else {
+      setMode("list");
+    }
+  }, [params]);
+
+  useEffect(() => {
+    navigate("/tasks/all/" + mode);
   }, [navigate, mode]);
 
   const [sliderRadius, setSliderRadius] = useState(1);
@@ -155,10 +164,10 @@ export const AllTasksTab: FC = () => {
     [tasks, user]
   );
 
-  const [forceReopenAccordeon, setForceReopenAccordeon] = useState(true);
+  const [forceReopenAccordeon, setForceReopenAccordeon] = useState(false);
 
   useEffect(() => {
-    console.log("Force redo accordeon");
+    console.log("Force reopen accordeon");
     setForceReopenAccordeon(false);
     setTimeout(() => {
       setForceReopenAccordeon(true);
@@ -199,7 +208,6 @@ export const AllTasksTab: FC = () => {
             <div className="flex items-center">
               <Text>Sort by:</Text>
               <Select
-                className="h-8"
                 value={filterOption}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                   setFilterOption(

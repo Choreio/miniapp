@@ -61,7 +61,7 @@ export function Navigation() {
         </TabsItem>
         <TabsItem
           title="Tasks"
-          onClick={() => handleNavClick("/tasks/all/list")}
+          onClick={() => handleNavClick("/tasks")}
           selected={activeTab === "tasks"}
           className="h-full"
         >

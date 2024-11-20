@@ -3,6 +3,11 @@ import { type FC } from "react";
 import { Tabbar } from "@telegram-apps/telegram-ui";
 import { TabbarItem } from "@telegram-apps/telegram-ui/dist/components/Layout/Tabbar/components/TabbarItem/TabbarItem";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  Cog8ToothIcon,
+  UserCircleIcon,
+  WalletIcon,
+} from "@heroicons/react/24/solid";
 
 export const ProfilePage: FC = () => {
   const navigate = useNavigate();
@@ -10,25 +15,31 @@ export const ProfilePage: FC = () => {
 
   return (
     <div>
-      <div className="pb-12">
+      <div className="pb-24">
         <Outlet></Outlet>
       </div>
-      <Tabbar>
+      <Tabbar style={{ height: "88px", paddingBottom: "24px" }}>
         <TabbarItem
           text="Profile"
           selected={location.pathname === "/profile/info"}
           onClick={() => navigate("/profile/info")}
-        ></TabbarItem>
+        >
+          <UserCircleIcon className="h-7 w-7"></UserCircleIcon>
+        </TabbarItem>
         <TabbarItem
           text="Wallet"
           selected={location.pathname === "/profile/wallet"}
           onClick={() => navigate("/profile/wallet")}
-        ></TabbarItem>
+        >
+          <WalletIcon className="h-7 w-7"></WalletIcon>
+        </TabbarItem>
         <TabbarItem
           text="Settings"
           selected={location.pathname === "/profile/settings"}
           onClick={() => navigate("/profile/settings")}
-        ></TabbarItem>
+        >
+          <Cog8ToothIcon className="h-7 w-7"></Cog8ToothIcon>
+        </TabbarItem>
       </Tabbar>
     </div>
   );
