@@ -1,1 +1,0 @@
-import{j as e,P as r}from"./index-C0zTMKxy.js";const s=""+new URL("animated-work-in-progress-image-0020-C5dZTnrq.gif",import.meta.url).href,a=()=>e.jsx(r,{className:"h-full",header:"WIP",description:"This page will be added in future builds",children:e.jsx("img",{src:s,alt:"WIP"})});export{a as W};
