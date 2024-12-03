@@ -1,0 +1,1 @@
+import{j as s,P as e}from"./index-CMxYK3Y4.js";const i="/miniapp/assets/animated-work-in-progress-image-0020-C5dZTnrq.gif",a=()=>s.jsx(e,{className:"h-full",header:"WIP",description:"This page will be added in future builds",children:s.jsx("img",{src:i,alt:"WIP"})});export{a as W};
